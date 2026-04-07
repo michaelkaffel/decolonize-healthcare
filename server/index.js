@@ -1,13 +1,34 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import session from 'express-session';
+import MongoStore from 'connect-mongo';
+import passport from './config/passport.js';
+import { configurePassport } from './config/passport.js';
 import connectDB from './db.js';
+
+configurePassport();
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
+
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }),
+    cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+    },
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
