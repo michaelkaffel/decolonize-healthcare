@@ -15,6 +15,6 @@ const quizAttemptSchema = new mongoose.Schema({
     attemptedAt: { type: Date, default: Date.now },
 });
 
-quizAttempSchema.index({ user: 1, lesson: 1 });
+quizAttemptSchema.index({ user: 1, lesson: 1 });
 
 export default mongoose.model('QuizAttempt', quizAttemptSchema);
