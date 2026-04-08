@@ -20,14 +20,14 @@ router.post('/register', async (req, res) => {
             if (err) return res.status(500).json({ message: 'Registration succeeded but login failed.'});
             return res.status(201).json({ id: user._id, name: user.name, email: user.email })
         });
-    } catch (err) {
+    } catch (_err) {
         res.status(500).json({ message: 'Server error.' });
     }
 });
 
 router.post('/login', async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        const { email, _password } = req.body;
 
         const user = await User.findOne({ email }).select('+hash');
         if (!user) {
