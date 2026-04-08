@@ -8,6 +8,8 @@ import { configurePassport } from './config/passport.js';
 import connectDB from './db.js';
 import authRouter from './routes/auth.js';
 import courseRoutes from './routes/courses.js';
+import checkoutRoutes from './routes/checkout.js';
+import webhookRoutes from './routes/webhooks.js';
 
 configurePassport();
 
@@ -15,6 +17,9 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+
+app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 
 app.use(session({
@@ -34,6 +39,8 @@ app.use(passport.session());
 
 app.use('/api/auth', authRouter);
 app.use('/api/courses', courseRoutes);
+app.use('/api/checkout', checkoutRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
