@@ -8,7 +8,7 @@ export default [
             globals: globals.node,
         },
         rules: {
-            'no-unused-vars': ['warn', {argsIgnorePattern: '^_', carsIgnorePattern: '^_' }],
+            'no-unused-vars': ['warn', {argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
             'no-console': 'off',
         },
     },
