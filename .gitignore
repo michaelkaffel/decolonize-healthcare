@@ -5,3 +5,5 @@ dist/
 .DS_Store
 *.log
 NOTES.md
+dch_build_log.md
+DCH_architecture.md

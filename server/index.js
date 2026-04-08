@@ -6,7 +6,8 @@ import MongoStore from 'connect-mongo';
 import passport from './config/passport.js';
 import { configurePassport } from './config/passport.js';
 import connectDB from './db.js';
-import authRouter from './routes/auth.js'
+import authRouter from './routes/auth.js';
+import courseRoutes from './routes/courses.js';
 
 configurePassport();
 
@@ -31,7 +32,8 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use('/api/auth', authRouter)
+app.use('/api/auth', authRouter);
+app.use('/api/courses', courseRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
