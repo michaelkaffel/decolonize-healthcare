@@ -89,6 +89,16 @@ VITE_SANITY_PROJECT_ID=
 VITE_SANITY_DATASET=production
 ```
 
+## Documentation
+
+- [Architecture](docs/dch_architecture.md) — system design, data models, and key decisions
+- [Build Log](docs/dch_build_log.md) — phase-by-phase implementation record
+- [API Reference](docs/api_reference.md) — all endpoints with request/response shapes
+
 ## CI
 
 GitHub Actions runs lint and build checks on every push and pull request to `main`. See `.github/workflows/ci.yml`.
+
+## Author
+
+Michael Kaffel — [michaelkaffel.com](https://michaelkaffel.com)
