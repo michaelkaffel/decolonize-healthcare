@@ -10,6 +10,7 @@ import authRouter from './routes/auth.js';
 import courseRoutes from './routes/courses.js';
 import checkoutRoutes from './routes/checkout.js';
 import webhookRoutes from './routes/webhooks.js';
+import lessonRoutes from './routes/lessons.js';
 
 configurePassport();
 
@@ -41,6 +42,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/courses', courseRoutes);
 app.use('/api/checkout', checkoutRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/courses/:courseId/lessons', lessonRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
