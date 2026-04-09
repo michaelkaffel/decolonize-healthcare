@@ -145,12 +145,43 @@
 - Both routes mounted in `index.js`: `/api/checkout` and `/api/webhooks`
 - Full end-to-end test deferred to Phase 5 when browser auth + buy button are available
 
-## Phase 4 — Content Delivery 🔲
-1. `checkEnrollment` middleware
-2. Lesson content routes (gated)
-3. Quiz submission + validation routes
-4. GCS signed URL route for PDFs
-5. LessonProgress tracking
+## Phase 4 — Content Delivery ✅
+
+### checkEnrollment Middleware (`server/middleware/checkEnrollment.js`)
+- Looks up active Enrollment for `req.user._id` + `req.params.courseId`
+- Returns `403` if no active enrollment found
+- Attaches enrollment to `req.enrollment` for downstream use
+- Used on all gated lesson routes alongside `isAuthenticated`
+
+### Lesson Routes (`server/routes/lessons.js`)
+- Mounted as `app.use('/api/courses/:courseId/lessons', lessonRoutes)` in `index.js`
+- Router created with `{ mergeParams: true }` — required for `req.params.courseId` to be available from the parent route
+- Lazy GCS `Storage` initialization via `getStorage()` factory
+- `findLesson` helper iterates modules to locate a lesson subdocument by `_id`
+
+**`GET /api/courses/:courseId/lessons`** — all lessons for enrolled user
+- Returns full lesson content, video source/ID, PDF titles (no `gcsPath`), `hasQuiz` boolean (no answers), and per-lesson progress
+- Progress built as a lookup map from `LessonProgress.find()` for efficient per-lesson matching
+
+**`GET /api/courses/:courseId/lessons/:lessonId`** — single lesson
+- Same shape as above for a single lesson with its progress
+
+**`POST /api/courses/:courseId/lessons/:lessonId/quiz`** — quiz submission
+- Fetches course with `.select('+modules.lessons.quiz.questions.correctIndex')` — answers only loaded server-side for grading
+- Validates `answers` array length matches question count
+- Grades quiz, calculates percentage score, pass threshold is 70%
+- Creates `QuizAttempt` document on every submission
+- Updates `LessonProgress` with `quizPassed: true` if passed (upsert)
+- Returns `{ score, passed, results }` — results include per-question correct/incorrect but never the correct answer
+
+**`POST /api/courses/:courseId/lessons/:lessonId/complete`** — manual lesson completion
+- For lessons without quizzes only — returns `400` if lesson has quiz questions
+- Creates/updates `LessonProgress` with `quizPassed: false` (upsert)
+
+**`GET /api/courses/:courseId/lessons/:lessonId/pdf/:pdfId`** — PDF signed URL
+- Fetches course with `.select('+modules.lessons.pdfs.gcsPath')` — raw GCS path only loaded server-side
+- Generates v4 signed URL with 15-minute expiry via `@google-cloud/storage`
+- Returns `{ url }` for client to open directly
 
 ## Phase 5 — Frontend 🔲
 1. Public pages (home, about, programmes catalogue, course landing)
