@@ -184,12 +184,32 @@
 - Returns `{ url }` for client to open directly
 
 ## Phase 5 — Frontend 🔲
-1. Public pages (home, about, programmes catalogue, course landing)
-2. Auth pages (login, register)
-3. Redux store setup (userSlice, enrollmentsSlice, progressSlice)
-4. Dashboard (enrolled courses + progress)
-5. Course player (video + content + PDF + quiz)
-6. Sanity integration (articles, education, books, partners)
+
+### Scaffold
+- Stub pages created for all routes via `create-stub-pages.sh`
+- React Router v7 route tree wired in `App.jsx` — public routes nested under `Layout`, protected routes nested under `ProtectedRoute`
+- `ProtectedRoute` bootstraps session on mount via `fetchSession` — redirects to `/login` if unauthenticated
+- Redux store configured with four slices: `userSlice`, `coursesSlice`, `enrollmentsSlice`, `progressSlice`
+
+### Redux Slices
+- `userSlice` — session state, `fetchSession` (never rejects — returns `null` on network failure), `logout` (throws on non-ok, RTK catches and dispatches `rejected`)
+- `coursesSlice` — public course catalogue, `fetchCourses` from `GET /api/courses`
+- `enrollmentsSlice` — user enrollments stub, `fetchEnrollments` from `GET /api/enrollments`
+- `progressSlice` — lesson progress stub, `byCourse` shape, `fetchProgress` from `GET /api/courses`
+- All slices: `{ status: 'idle' | 'loading' | 'error', error: null }` shape
+
+### Design System
+- Brand color tokens in `tailwind.config.js`: `crimson`, `coral`, `gold`, `green`, `teal`, `blush`, `cream`
+- Background: warm off-white `#FAF8F5` (`brand-cream`) applied at Layout level
+- No dark mode — light background throughout
+- Illustration strategy: Storyset Rafiki style, brand-palette colored, no stock photography
+- Illustrations stored in `client/public/illustrations/`
+- Logo: SVG at `client/public/logo.svg`, referenced via URL path (not imported)
+
+### Layout Components
+- `Layout.jsx` — `flex min-h-screen flex-col bg-brand-cream`, Navbar + Outlet + Footer
+- `Navbar.jsx` — sticky, `max-w-7xl`, shadow on scroll, pill-styled nav links (`rounded-full`, blush bg on active/hover), Log In as outline pill, Dashboard as filled pill. Mobile: hamburger animates to ✕, slide-down dropdown with auth link above divider, pill-styled nav links
+- `Footer.jsx` — `max-w-7xl`, flex row on desktop (brand fixed `w-48`, link groups `flex-1` 3-col grid), stacked centered on mobile. Link groups use `w-fit` inner wrapper so heading left-aligns with links. Copyright bar: 3-item flex row on desktop, stacked centered on mobile. Credits: "Proudly created by Owl Medicine" | copyright | "Built by Michael Kaffel"
 
 ## Phase 6 — CI/CD + Deploy 🔲
 1. GitHub Actions deploy job
