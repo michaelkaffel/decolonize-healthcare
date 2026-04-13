@@ -3,9 +3,11 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 export const fetchEnrollments = createAsyncThunk(
     'enrollments/fetchAll',
     async () => {
-        const res = await fetch('/api/enrollments');
+        const res = await fetch('/api/enrollments', {
+            credentials: 'include',
+        });
         if (!res.ok) throw new Error ('Failed to fetch enrollments');
-        return res.json()
+        return res.json();
     }
 );
 

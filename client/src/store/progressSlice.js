@@ -2,10 +2,13 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 export const fetchProgress = createAsyncThunk(
     'progress/fetchAll',
-    async () => {
-        const res = await fetch('/api/courses');
-        if (!res.ok) throw new Error ('Failed to fetch progress')
-            return res.json()
+    async (courseId) => {
+        const res = await fetch(`/api/courses/${courseId}/lessons/progress`, {
+            credentials: 'include',
+        });
+        if (!res.ok) throw new Error ('Failed to fetch progress');
+        const data = await res.json();
+        return { courseId, ...data };
     }
 );
 
@@ -17,7 +20,8 @@ const progressSlice = createSlice({
         builder
             .addCase(fetchProgress.pending, state => {state.status = 'loading'})
             .addCase(fetchProgress.fulfilled, (state, action) => {
-                state.byCourse = action.payload;
+                const { courseId, completed, total } = action.payload;
+                state.byCourse[courseId] = {completed, total };
                 state.status = 'idle';
             })
             .addCase(fetchProgress.rejected, (state, action) => {

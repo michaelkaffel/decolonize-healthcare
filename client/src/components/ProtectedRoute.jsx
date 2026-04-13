@@ -11,7 +11,7 @@ const ProtectedRoute = () => {
         if (status === 'idle' && user === null) dispatch(fetchSession());
     }, [dispatch, status, user]);
 
-    if (status === 'loading') return null; // add spinner
+    if (status === 'loading' || (status === 'idle' && user === null)) return null; // add spinner
     if (!user) return <Navigate to='/login' replace />
     return <Outlet />
 };
