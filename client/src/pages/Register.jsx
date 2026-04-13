@@ -45,7 +45,7 @@ const Register = () => {
         <div className='flex flex-col lg:flex-row min-h-screen'>
             <div className='lg:w-1/2 items-center justify-center bg-brand-blush p-12'>
                 <img
-                    src='/illustrations/auth-register.svg'
+                    src='/illustrations/register.svg'
                     alt='Person creating an account'
                     className='w-full max-w-md mx-auto lg:mt-24'
                 />

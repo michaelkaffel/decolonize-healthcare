@@ -44,7 +44,7 @@ const Login = () => {
         <div className='flex flex-col lg:flex-row min-h-screen'>
             <div className='lg:w-1/2 items-center justify-center bg-brand-blush p-12'>
                 <img
-                    src='/illustrations/auth-login.svg'
+                    src='/illustrations/login.svg'
                     alt='Person learning online'
                     className='w-full max-w-md mx-auto lg:mt-24'
                 />
