@@ -78,6 +78,36 @@ router.get(
     }
 );
 
+// GET /api/courses/:courseId/progress — lesson completion count for dashboard
+router.get(
+    '/progress',
+    isAuthenticated,
+    checkEnrollment,
+    async (req, res) => {
+        try{
+            const course = await Course.findById(req.params.courseId, 'modules.lessons._id');
+
+            if (!course) {
+                return res.status(404).json({ message: 'Course not found' });
+            }
+
+            const total = course.modules.reduce(
+                (sum, mod) => sum + mod.lessons.length, 0
+            );
+
+            const completed = await LessonProgress.countDocuments({
+                user: req.user._id,
+                course: course._id,
+            });
+
+            res.json({ completed, total })
+        } catch (err) {
+            console.error('GET /progress error:', err);
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+);
+
 // GET /api/courses/:courseId/lessons/:lessonsId — single lesson
 router.get(
     '/:lessonId',
