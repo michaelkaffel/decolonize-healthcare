@@ -26,8 +26,15 @@ const Dashboard = () => {
     const loading = enrollmentsStatus === 'loading';
 
     return (
-        <div className='flex-1'>
-            <div className='mx-auto max-w-4xl px-6 py-12'>
+        <div className='flex-1 relative'>
+            {enrollments.length > 0 && (
+                <img 
+                    src='/illustrations/dashboard-learning.svg'
+                    alt='an illustration of a globe'
+                    className='absolute top-0 left-1/2 -translate-x-1/2 h-full w-full object-contain opacity-10'
+                />
+            )}
+            <div className='relative z-10 mx-auto max-w-4xl px-6 py-12'>
                 <div className='mb-10'>
                     <h1 className='text-3xl font-semibold text-gray-900'>
                         Welcome {firstName}
@@ -42,6 +49,11 @@ const Dashboard = () => {
                 {!loading && enrollments.length === 0 && (
                     <div className='flex flex-col items-center justify-center rounded-2xl bg-white px-8 py-16 shadow-sm text-center'>
                         <p className='mb-2 text-lg font-medium text-gray-800'>No courses yet</p>
+                        <img
+                            src='/illustrations/dashboard-empty.svg'
+                            alt='No courses yet'
+                            className='mb-6 w-96'
+                        />
                         <p className='mb-6 text-sm text-gray-500'>
                             Browse our programmes and start learning today.
                         </p>
@@ -69,6 +81,8 @@ const Dashboard = () => {
                         })}
                     </div>
                 )}
+
+                
             </div>
         </div>
     );

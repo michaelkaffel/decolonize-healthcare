@@ -1,107 +1,151 @@
 import 'dotenv/config';
-import mongoose from 'mongoose';
 import connectDB from '../db.js';
 import Course from '../models/Course.js';
 
-const devCourse = {
-  title: 'Decolonizing Your Health Practice',
-  slug: 'decolonizing-your-health-practice',
-  description:
-    'A foundational course exploring how colonial frameworks shape modern healthcare and how practitioners can build more equitable approaches.',
-  price: 9900,
-  published: true,
-  thumbnail: '',
-  modules: [
+await connectDB();
+
+await Course.deleteMany();
+
+await Course.insertMany([
     {
-      title: 'Module 1 — Foundations',
-      order: 1,
-      lessons: [
-        {
-          title: 'Welcome and Course Overview',
-          order: 1,
-          content:
-            '<p>Welcome to the course. In this lesson we cover what you will learn and how to navigate the material.</p>',
-          videoSource: 'youtube',
-          videoId: 'dQw4w9WgXcQ',
-          pdfs: [
+        title: 'Decolonizing Your Health Practice',
+        slug: 'decolonizing-your-health-practice',
+        description: 'Explore how colonial structures have shaped modern medicine and learn practical frameworks for reclaiming your health on your own terms.',
+        price: 9900,
+        published: true,
+        thumbnail: 'https://picsum.photos/seed/course1/800/450',
+        modules: [
             {
-              title: 'Course Syllabus',
-              gcsPath: 'courses/decolonizing/pdfs/syllabus.pdf',
+                title: 'Module 1 — Foundations',
+                order: 1,
+                lessons: [
+                    {
+                        title: 'Welcome & Course Overview',
+                        order: 1,
+                        content: '<p>Welcome to the course. Here is what we will cover.</p>',
+                        videoSource: 'youtube',
+                        videoId: 'dQw4w9WgXcQ',
+                        pdfs: [],
+                        quiz: { questions: [] },
+                    },
+                    {
+                        title: 'The History of Colonial Medicine',
+                        order: 2,
+                        content: '<p>An overview of how colonial medicine developed.</p>',
+                        videoSource: 'youtube',
+                        videoId: 'dQw4w9WgXcQ',
+                        pdfs: [
+                            {
+                                title: 'Supplementary Reading',
+                                gcsPath: 'dev/placeholder.pdf',
+                            },
+                        ],
+                        quiz: {
+                            questions: [
+                                {
+                                    prompt: 'What is the primary focus of this lesson?',
+                                    options: ['Nutrition', 'Colonial medicine history', 'Exercise science', 'Mental health'],
+                                    correctIndex: 1,
+                                },
+                                {
+                                    prompt: 'Which of the following best describes decolonizing healthcare?',
+                                    options: [
+                                        'Avoiding all modern medicine',
+                                        'Critiquing and rebuilding health frameworks',
+                                        'Returning to pre-industrial farming',
+                                        'Eliminating all pharmaceutical drugs',
+                                    ],
+                                    correctIndex: 1,
+                                },
+                            ],
+                        },
+                    },
+                ],
             },
-          ],
-          quiz: { questions: [] },
-        },
-        {
-          title: 'Historical Context',
-          order: 2,
-          content:
-            '<p>This lesson examines the historical roots of colonial influence in healthcare systems.</p>',
-          videoSource: null,
-          videoId: null,
-          pdfs: [],
-          quiz: {
-            questions: [
-              {
-                prompt:
-                  'Which of the following best describes a colonial framework in healthcare?',
-                options: [
-                  'A system that centers indigenous healing traditions',
-                  'A system that imposes one cultural model as universal',
-                  'A system that adapts to local community needs',
-                  'A system that prioritizes preventive care',
+            {
+                title: 'Module 2 — Practical Tools',
+                order: 2,
+                lessons: [
+                    {
+                        title: 'Building Your Personal Health Framework',
+                        order: 1,
+                        content: '<p>In this lesson we build your personal framework.</p>',
+                        videoSource: 'youtube',
+                        videoId: 'dQw4w9WgXcQ',
+                        pdfs: [],
+                        quiz: { questions: [] },
+                    },
                 ],
-                correctIndex: 1,
-              },
-              {
-                prompt:
-                  'Why is historical context important for modern practitioners?',
-                options: [
-                  'It is not — only current evidence matters',
-                  'It helps identify inherited biases in standard practices',
-                  'It replaces the need for clinical training',
-                ],
-                correctIndex: 1,
-              },
-            ],
-          },
-        },
-      ],
+            },
+        ],
     },
     {
-      title: 'Module 2 — Practice',
-      order: 2,
-      lessons: [
-        {
-          title: 'Reframing Assessment',
-          order: 1,
-          content:
-            '<p>Practical strategies for making clinical assessments more culturally responsive.</p>',
-          videoSource: 'youtube',
-          videoId: 'dQw4w9WgXcQ',
-          pdfs: [
+        title: 'Nervous System Reset',
+        slug: 'nervous-system-reset',
+        description: 'A practical course for understanding and regulating your nervous system using somatic, breathwork, and movement-based tools rooted in lived experience.',
+        price: 7900,
+        published: true,
+        thumbnail: 'https://picsum.photos/seed/course2/800/450',
+        modules: [
             {
-              title: 'Assessment Worksheet',
-              gcsPath: 'courses/decolonizing/pdfs/assessment-worksheet.pdf',
+                title: 'Module 1 — Understanding Your Nervous System',
+                order: 1,
+                lessons: [
+                    {
+                        title: 'Introduction to the Nervous System',
+                        order: 1,
+                        content: '<p>An introduction to how the nervous system works.</p>',
+                        videoSource: 'youtube',
+                        videoId: 'dQw4w9WgXcQ',
+                        pdfs: [],
+                        quiz: { questions: [] },
+                    },
+                    {
+                        title: 'Fight, Flight, Freeze & Fawn',
+                        order: 2,
+                        content: '<p>Understanding stress responses and how they show up.</p>',
+                        videoSource: 'youtube',
+                        videoId: 'dQw4w9WgXcQ',
+                        pdfs: [],
+                        quiz: {
+                            questions: [
+                                {
+                                    prompt: 'Which of the following is a stress response?',
+                                    options: ['Digest', 'Freeze', 'Sleep', 'Grow'],
+                                    correctIndex: 1,
+                                },
+                            ],
+                        },
+                    },
+                ],
             },
-          ],
-          quiz: { questions: [] },
-        },
-      ],
+            {
+                title: 'Module 2 — Regulation Practices',
+                order: 2,
+                lessons: [
+                    {
+                        title: 'Breathwork for Regulation',
+                        order: 1,
+                        content: '<p>Practical breathwork techniques for nervous system regulation.</p>',
+                        videoSource: 'youtube',
+                        videoId: 'dQw4w9WgXcQ',
+                        pdfs: [],
+                        quiz: { questions: [] },
+                    },
+                    {
+                        title: 'Somatic Movement Basics',
+                        order: 2,
+                        content: '<p>An introduction to somatic movement practices.</p>',
+                        videoSource: 'youtube',
+                        videoId: 'dQw4w9WgXcQ',
+                        pdfs: [],
+                        quiz: { questions: [] },
+                    },
+                ],
+            },
+        ],
     },
-  ],
-};
+]);
 
-async function seed() {
-  try {
-    await connectDB();
-    await Course.deleteMany({});
-    const course = await Course.create(devCourse);
-    console.log(`Seeded course: ${course.title} (${course._id})`);
-  } catch (err) {
-    console.error('Seed failed:', err);
-  } finally {
-    await mongoose.disconnect();
-  }
-}
-
-seed();
+console.log('Seeded 2 courses.');
+process.exit(0);

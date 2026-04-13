@@ -90,15 +90,25 @@ const Footer = () => (
 
             <div className='mt-10 border-t border-brand-blush pt-6 text-center text-xs text-gray-400'>
                 <div className='flex flex-col items-center gap-2 text-center md:flex-row md:justify-between md:text-left'>
-                    <p>Proudly created by Owl Medicine</p>
-                    <p>© {new Date().getFullYear()} Decolonize Healthcare. All rights reserved</p>
-                    <p className='ml-2'>
-                        Built by{' '}
-                        <a href='https://michaelkaffel.com' target='_blank' rel='noreferrer' className='hover:text-brand-crimson underline'>
-                            Michael Kaffel
+                    <p>Proudly created by{' '}
+                        <a href='https://owlchrysalismedicine.com/' target='_blank' rel='noreferrer' className='hover:text-brand-crimson underline'>
+                            Owl Medicine
                         </a>
-
                     </p>
+                    <p>© {new Date().getFullYear()} Decolonize Healthcare. All rights reserved</p>
+
+                    <div>
+                        <p className='ml-2'>
+                            Built by{' '}
+                            <a href='https://michaelkaffel.com' target='_blank' rel='noreferrer' className='hover:text-brand-crimson underline'>
+                                Michael Kaffel
+                            </a>
+
+                        </p>
+                        <a href="https://storyset.com/nature" target="_blank" rel="noreferrer" className='hover:text-brand-crimson underline'>
+                            Illustrations by Storyset
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
