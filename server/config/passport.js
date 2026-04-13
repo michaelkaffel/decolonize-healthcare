@@ -1,4 +1,5 @@
 import passport from 'passport';
+import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/User.js';
 
@@ -16,6 +17,8 @@ passport.deserializeUser(async (id, done) => {
 });
 
 export const configurePassport = () => {
+    passport.use(new LocalStrategy({ usernameField: 'email' }, User.authenticate()));
+    
     passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,

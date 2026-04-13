@@ -26,48 +26,50 @@ const Dashboard = () => {
     const loading = enrollmentsStatus === 'loading';
 
     return (
-        <div className='mx-auto max-w-4xl px-6 py-12'>
-            <div className='mb-10'>
-                <h1 className='text-3xl font-semibold text-gray-900'>
-                    Welcome {firstName}
-                </h1>
-                <p className='mt-1 text-sm text-gray-500'>Here's what you're working on.</p>
+        <div className='flex-1'>
+            <div className='mx-auto max-w-4xl px-6 py-12'>
+                <div className='mb-10'>
+                    <h1 className='text-3xl font-semibold text-gray-900'>
+                        Welcome {firstName}
+                    </h1>
+                    <p className='mt-1 text-sm text-gray-500'>Here's what you're working on.</p>
+                </div>
+
+                {loading && (
+                    <div className='text-sm text-gray-400'>Loading your courses...</div>
+                )}
+
+                {!loading && enrollments.length === 0 && (
+                    <div className='flex flex-col items-center justify-center rounded-2xl bg-white px-8 py-16 shadow-sm text-center'>
+                        <p className='mb-2 text-lg font-medium text-gray-800'>No courses yet</p>
+                        <p className='mb-6 text-sm text-gray-500'>
+                            Browse our programmes and start learning today.
+                        </p>
+                        <Link
+                            to='/programs'
+                            className='rounded-full bg-brand-crimson px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-coral'
+                        >
+                            Browse courses
+                        </Link>
+                    </div>
+                )}
+
+                {!loading && enrollments.length > 0 && (
+                    <div className='grid gap-6 sm:grid-cols-2'>
+                        {enrollments.map((enrollment) => {
+                            const course = enrollment.course;
+                            const progress = byCourse[course._id];
+                            return (
+                                <CourseCard
+                                    key={enrollment._id}
+                                    course={course}
+                                    progress={progress}
+                                />
+                            );
+                        })}
+                    </div>
+                )}
             </div>
-
-            {loading && (
-                <div className='text-sm text-gray-400'>Loading your courses...</div>
-            )}
-
-            {!loading && enrollments.length === 0 && (
-                <div className='flex flex-col items-center justify-center rounded-2xl bg-white px-8 py-16 shadow-sm text-center'>
-                    <p className='mb-2 text-lg font-medium text-gray-800'>No courses yet</p>
-                    <p className='mb-6 text-sm text-gray-500'>
-                        Browse our programmes and start learning today.
-                    </p>
-                    <Link
-                        to='/programs'
-                        className='rounded-full bg-brand-crimson px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-coral'
-                    >
-                        Browse courses
-                    </Link>
-                </div>
-            )}
-
-            {!loading && enrollments.length > 0 && (
-                <div className='grid gap-6 sm:grid-cols-2'>
-                    {enrollments.map((enrollment) => {
-                        const course = enrollment.course;
-                        const progress = byCourse[course._id];
-                        return (
-                            <CourseCard
-                                key={enrollment._id}
-                                course={course}
-                                progress={progress}
-                            />
-                        );
-                    })}
-                </div>
-            )}
         </div>
     );
 };
