@@ -18,7 +18,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         for (const enrollment of enrollments) {
-            dispatch(fetchProgress(enrollment.course._id))
+            dispatch(fetchProgress(enrollment.course.id))
         }
     }, [enrollments, dispatch]);
 
@@ -58,10 +58,10 @@ const Dashboard = () => {
                     <div className='grid gap-6 sm:grid-cols-2'>
                         {enrollments.map((enrollment) => {
                             const course = enrollment.course;
-                            const progress = byCourse[course._id];
+                            const progress = byCourse[course.id];
                             return (
                                 <CourseCard
-                                    key={enrollment._id}
+                                    key={enrollment.id}
                                     course={course}
                                     progress={progress}
                                 />
