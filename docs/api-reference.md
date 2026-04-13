@@ -201,6 +201,60 @@ Stripe webhook endpoint. Called by Stripe, not by the client.
 
 ---
 
+## Enrollments
+
+### GET /api/enrollments
+
+Get the authenticated user's active course enrollments.
+
+**Auth:** Session cookie
+
+**Response:**
+```json
+[
+  {
+    "id": "string",
+    "course": {
+      "id": "string",
+      "title": "string",
+      "slug": "string",
+      "description": "string",
+      "thumbnail": "string"
+    },
+    "purchasedAt": "ISO date",
+    "status": "active"
+  }
+]
+```
+
+**Errors:**
+- `401` — not authenticated
+- `500` — server error
+
+---
+
+## Progress
+
+### GET /api/courses/:courseId/lessons/progress
+
+Get lesson completion counts for an enrolled course. Used by the Dashboard to display progress without fetching full lesson content.
+
+**Auth:** Session cookie + active enrollment
+
+**Response:**
+```json
+{
+  "completed": 3,
+  "total": 8
+}
+```
+
+**Errors:**
+- `401` — not authenticated
+- `403` — not enrolled
+- `404` — course not found
+- `500` — server error
+
 ## Lessons (Protected)
 
 All lesson routes require authentication and active enrollment. Middleware stack: `isAuthenticated` → `checkEnrollment`.
