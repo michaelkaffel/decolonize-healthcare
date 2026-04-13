@@ -1,5 +1,13 @@
 import mongoose from 'mongoose';
 
+const toJSON = {
+    transform(doc, ret) {
+        ret.id = ret._id.toString();
+        delete ret._id;
+        delete ret.__v;
+    }
+}
+
 const quizQuestionSchema = new mongoose.Schema(
     {
         prompt: { type: String, required: true },
@@ -13,8 +21,16 @@ const quizQuestionSchema = new mongoose.Schema(
         },
         correctIndex: { type: Number, required: true, select: false },
     },
-    { _id: true }
+    { _id: true, toJSON }
 );
+
+const pdfSchema = new mongoose.Schema(
+    {
+        title: { type: String, required: true },
+        gcsPath: { type: String, required: true, select: false },
+    },
+    { _id: true, toJSON }
+)
 
 const lessonSchema = new mongoose.Schema(
     {
@@ -27,17 +43,12 @@ const lessonSchema = new mongoose.Schema(
             default: null,
         },
         videoId: { type: String, default: null },
-        pdfs: [
-            {
-                title: { type: String, required: true },
-                gcsPath: { type: String, required: true, select: false },
-            },
-        ],
+        pdfs: [pdfSchema],
         quiz: {
             questions: [quizQuestionSchema],
         },
     },
-    { _id: true }
+    { _id: true, toJSON }
 );
 
 const moduleSchema = new mongoose.Schema(
@@ -46,7 +57,7 @@ const moduleSchema = new mongoose.Schema(
         order: { type: Number, required: true },
         lessons: [lessonSchema],
     },
-    { _id: true }
+    { _id: true, toJSON }
 );
 
 const courseSchema = new mongoose.Schema(
@@ -59,7 +70,7 @@ const courseSchema = new mongoose.Schema(
         thumbnail: { type: String, default: '' },
         modules: [moduleSchema],
     },
-    { timestamps: true }
+    { timestamps: true, toJSON }
 );
 
 export default mongoose.model('Course', courseSchema)

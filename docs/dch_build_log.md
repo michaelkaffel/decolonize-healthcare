@@ -183,33 +183,103 @@
 - Generates v4 signed URL with 15-minute expiry via `@google-cloud/storage`
 - Returns `{ url }` for client to open directly
 
-## Phase 5 — Frontend 🔲
+## Phase 5 — Frontend (in progress)
 
-### Scaffold
-- Stub pages created for all routes via `create-stub-pages.sh`
-- React Router v7 route tree wired in `App.jsx` — public routes nested under `Layout`, protected routes nested under `ProtectedRoute`
-- `ProtectedRoute` bootstraps session on mount via `fetchSession` — redirects to `/login` if unauthenticated
-- Redux store configured with four slices: `userSlice`, `coursesSlice`, `enrollmentsSlice`, `progressSlice`
+### Scaffold ✅
+*(existing entry — unchanged)*
 
-### Redux Slices
-- `userSlice` — session state, `fetchSession` (never rejects — returns `null` on network failure), `logout` (throws on non-ok, RTK catches and dispatches `rejected`)
-- `coursesSlice` — public course catalogue, `fetchCourses` from `GET /api/courses`
-- `enrollmentsSlice` — user enrollments stub, `fetchEnrollments` from `GET /api/enrollments`
-- `progressSlice` — lesson progress stub, `byCourse` shape, `fetchProgress` from `GET /api/courses`
-- All slices: `{ status: 'idle' | 'loading' | 'error', error: null }` shape
+### Redux Slices ✅
+*(existing entry — unchanged)*
 
-### Design System
-- Brand color tokens in `tailwind.config.js`: `crimson`, `coral`, `gold`, `green`, `teal`, `blush`, `cream`
-- Background: warm off-white `#FAF8F5` (`brand-cream`) applied at Layout level
-- No dark mode — light background throughout
-- Illustration strategy: Storyset Rafiki style, brand-palette colored, no stock photography
-- Illustrations stored in `client/public/illustrations/`
-- Logo: SVG at `client/public/logo.svg`, referenced via URL path (not imported)
+### Design System ✅
+*(existing entry — unchanged)*
 
-### Layout Components
-- `Layout.jsx` — `flex min-h-screen flex-col bg-brand-cream`, Navbar + Outlet + Footer
-- `Navbar.jsx` — sticky, `max-w-7xl`, shadow on scroll, pill-styled nav links (`rounded-full`, blush bg on active/hover), Log In as outline pill, Dashboard as filled pill. Mobile: hamburger animates to ✕, slide-down dropdown with auth link above divider, pill-styled nav links
-- `Footer.jsx` — `max-w-7xl`, flex row on desktop (brand fixed `w-48`, link groups `flex-1` 3-col grid), stacked centered on mobile. Link groups use `w-fit` inner wrapper so heading left-aligns with links. Copyright bar: 3-item flex row on desktop, stacked centered on mobile. Credits: "Proudly created by Owl Medicine" | copyright | "Built by Michael Kaffel"
+### Layout Components ✅
+*(existing entry — unchanged)*
+
+---
+
+### Auth Pages ✅
+
+**Login (`client/src/pages/Login.jsx`)**
+- Split-screen layout: illustration left (`bg-brand-blush`), form right (`bg-brand-cream`)
+- Google OAuth button + local email/password form
+- Anti-enumeration handled on frontend: checks `data.id` presence rather than `res.ok` (both success and invalid-creds return `200`)
+- On success: `dispatch(setUser(data))` + `navigate('/dashboard')`
+- `credentials: 'include'` on all fetch calls for session cookie across Vite proxy
+
+**Register (`client/src/pages/Register.jsx`)**
+- Same split-screen layout
+- Fields: name, email, password (`minLength={8}`)
+- Username derived from email on backend — not a form field
+- Checks `res.status === 201` for confirmed account creation; `200` = anti-enumeration path
+
+---
+
+### Backend additions for Dashboard ✅
+
+**`GET /api/enrollments` (`server/routes/enrollments.js`)**
+- Protected by `isAuthenticated`
+- Returns active enrollments with course `title`, `slug`, `description`, `thumbnail` populated
+- Mounted at `/api/enrollments` in `index.js`
+
+**`GET /api/courses/:courseId/lessons/progress` (added to `server/routes/lessons.js`)**
+- Protected by `isAuthenticated` + `checkEnrollment`
+- Returns `{ completed, total }` lesson counts for the enrolled course
+- Placed above `/:lessonId` route to prevent `progress` being matched as a lessonId
+- Used by Dashboard to display per-course progress without fetching full lesson content
+
+---
+
+### Redux Slices — updated ✅
+
+**`enrollmentsSlice`**
+- `fetchEnrollments` thunk hits `GET /api/enrollments` with `credentials: 'include'`
+- Stores results in `state.items`
+
+**`progressSlice`**
+- `fetchProgress(courseId)` thunk hits `GET /api/courses/:courseId/lessons/progress`
+- Stores results in `state.byCourse[courseId] = { completed, total }`
+- Fixed from stub: was incorrectly pointing at `GET /api/courses`
+
+---
+
+### Dashboard (`client/src/pages/Dashboard.jsx`) ✅
+
+- Fetches enrollments on mount, then dispatches `fetchProgress` per enrolled course
+- Displays course cards with thumbnail, title, description, progress bar, and CTA
+- CTA label cycles: "Start course" / "Continue" / "Review course" based on percent complete
+- Empty state with "Browse courses" CTA linking to `/programs`
+- `firstName` derived from `name` in `userSlice` via `.split(' ')[0]`, falls back to `"there"`
+- Layout: outer `flex-1` div + `min-h-screen` on `<main>` in `Layout.jsx` keeps footer below fold
+
+---
+
+### Refactor: Mongoose `toJSON` transforms ✅
+
+Added `toJSON` transform to all schemas — top-level and all subdocuments:
+- `User.js`
+- `Course.js` — top-level + `moduleSchema`, `lessonSchema`, `pdfSchema`, `quizQuestionSchema`
+- `Enrollment.js`
+- `LessonProgress.js`
+- `QuizAttempt.js`
+
+Transform: `ret.id = ret._id.toString(); delete ret._id; delete ret.__v;`
+
+`pdfs` array in `Course.js` extracted from inline schema to named `pdfSchema` to support `toJSON`.
+
+All `._id` references replaced with `.id` in `Dashboard.jsx` and `server/routes/auth.js`.
+
+---
+
+### Bugs fixed
+
+- **`passport.js`** — missing `passport.use(User.createStrategy())` caused `Unknown authentication strategy "local"` error on login
+- **`LocalStrategy`** — `passport-local` defaults to `username` field; replaced `User.createStrategy()` with explicit `new LocalStrategy({ usernameField: 'email' }, User.authenticate())` so email is used for login
+- **`vite.config.js`** — proxy URL malformed: `'http://:localhost8080'` → `'http://localhost:8080'`
+- **`ProtectedRoute`** — race condition on refresh: `fetchSession` dispatched but redirect fired before it resolved; fixed by treating `status === 'idle' && user === null` as loading state
+- **`auth.js`** — `_password` typo in login route destructuring meant password was never passed to Passport
+- **`Layout.jsx`** — `<main>` needed `min-h-screen flex flex-col` to keep footer below fold on short pages
 
 ## Phase 6 — CI/CD + Deploy 🔲
 1. GitHub Actions deploy job

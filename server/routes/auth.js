@@ -18,7 +18,7 @@ router.post('/register', async (req, res) => {
 
         req.login(user, (err) => {
             if (err) return res.status(500).json({ message: 'Registration succeeded but login failed.'});
-            return res.status(201).json({ id: user._id, name: user.name, email: user.email })
+            return res.status(201).json({ id: user.id, name: user.name, email: user.email })
         });
     } catch (_err) {
         res.status(500).json({ message: 'Server error.' });
@@ -45,7 +45,7 @@ router.post('/login', async (req, res, next) => {
             }
             req.login(authenticatedUser, (loginErr) => {
                 if (loginErr) return next(loginErr);
-                return res.json({ id: authenticatedUser._id, name: authenticatedUser.name, email: authenticatedUser.email });
+                return res.json({ id: authenticatedUser.id, name: authenticatedUser.name, email: authenticatedUser.email });
             });
         })(req, res, next);
     } catch (err) {
@@ -62,7 +62,7 @@ router.post('/logout', (req, res, next) => {
 
 router.get('/me', (req, res) => {
     if (!req.user) return res.status(401).json({ message: 'Not authenticated.' });
-    res.json({ id: req.user._id, name: req.user.name, email: req.user.email })
+    res.json({ id: req.user.id, name: req.user.name, email: req.user.email })
 });
 
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
