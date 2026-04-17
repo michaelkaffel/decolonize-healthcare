@@ -13,8 +13,7 @@ import EducationPage from './pages/EducationPage.jsx';
 import Books from './pages/Books.jsx';
 import Partners from './pages/Partners.jsx';
 import About from './pages/About.jsx';
-import Login from './pages/Login.jsx';
-import Register from './pages/Register.jsx';
+
 
 // Protected Pages
 import Dashboard from './pages/Dashboard.jsx';
@@ -37,8 +36,8 @@ const App = () => (
             <Route path="books" element={<Books />} />
             <Route path="partners" element={<Partners />} />
             <Route path="about" element={<About />} />
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
+            {/* <Route path="login" element={<Navigate to='/' replace />} />
+            <Route path="register" element={<Navigate to='/' replace />} /> */}
 
             {/* Protected */}
             <Route element={<ProtectedRoute />}>

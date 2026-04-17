@@ -8,7 +8,7 @@ import { fetchProgress } from '../store/progressSlice';
 
 const Dashboard = () => {
     const dispatch = useDispatch();
-    const { name } = useSelector((state) => state.user);
+    const name = useSelector((state) => state.user.data?.name);
     const { items: enrollments, status: enrollmentsStatus } = useSelector((state) => state.enrollments);
     const { byCourse } = useSelector((state) => state.progress);
 
@@ -22,7 +22,10 @@ const Dashboard = () => {
         }
     }, [enrollments, dispatch]);
 
-    const firstName = name?.split(' ')[0] ?? 'there';
+    const firstName = name?.split(' ')[0];
+    const displayName = firstName
+        ? firstName.charAt(0).toUpperCase() + firstName.slice(1)
+        : 'there';
     const loading = enrollmentsStatus === 'loading';
 
     return (
@@ -37,7 +40,7 @@ const Dashboard = () => {
             <div className='relative z-10 mx-auto max-w-4xl px-6 py-12'>
                 <div className='mb-10'>
                     <h1 className='text-3xl font-semibold text-gray-900'>
-                        Welcome {firstName}
+                        Welcome {displayName}
                     </h1>
                     <p className='mt-1 text-sm text-gray-500'>Here's what you're working on.</p>
                 </div>
