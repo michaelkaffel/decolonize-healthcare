@@ -44,13 +44,13 @@ const Login = () => {
         <div className='flex flex-col lg:flex-row min-h-screen'>
             <div className='lg:w-1/2 items-center justify-center bg-brand-blush p-12'>
                 <img
-                    src='/illustrations/login.svg'
+                    src='/illustrations/login-1.svg'
                     alt='Person learning online'
                     className='w-full max-w-md mx-auto lg:mt-24'
                 />
             </div>
 
-            <div className='flex flex-1 items-center justify-center bg-brand-cream p-6'>
+            <div className='flex flex-1 items-center justify-center bg-brand-cream2 p-6'>
                 <div className='w-full max-w-sm'>
                     <div className='mb-8 flex justify-between items-center'>
                         <div>

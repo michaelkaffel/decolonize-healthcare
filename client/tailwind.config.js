@@ -13,6 +13,8 @@ export default {
                     teal: '#2A5C7A',
                     blush: '#F9EDED',
                     cream: '#FAF8F5',
+                    cream2: '#F4F2EE',
+                    blue: '#2569B9'
                 },
             },
             fontFamily: {

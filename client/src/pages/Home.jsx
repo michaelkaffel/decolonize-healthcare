@@ -11,7 +11,7 @@ const Home = () => (
                 alt='Diverse group of people wearing masks'
                 className='w-full h-[420px] md:h-[520px] object-cover'
             />
-            <div className='bg-white text-center px-6 py-16'>
+            <div className='bg-brand-cream2 text-center px-6 py-16'>
                 <h1 className='font-display text-5xl md:text-7xl font-bold text-brand-gold uppercase tracking-wide leading-tight mb-6'>
                     Welcome to<br />Decolonize Healthcare
                 </h1>
@@ -24,7 +24,7 @@ const Home = () => (
 
                 <div className='max-w-2xl mx-auto'>
                     <h2 className='font-display text-3xl font-bold text-brand-gold uppercase mb-3'>
-                        Stay Informed
+                        Decolonize Your Mind
                     </h2>
                     <p className='mb-3'>
                         Subscribe to receive our monthly newsletter featuring educational videos,
