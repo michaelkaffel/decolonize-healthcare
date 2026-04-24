@@ -69,7 +69,6 @@ const Articles = () => {
                     </p>
                 </div>
 
-                <NewsletterSignup className='my-5' />
 
                 {featured && (
                     <div className='mb-10'>
@@ -81,7 +80,7 @@ const Articles = () => {
                     {rest.map(a => <ArticleCard key={a.slug} article={a} />)}
                 </div>
 
-                
+                <NewsletterSignup className='mt-10' />
             </div>
         </div>
     )
