@@ -33,6 +33,8 @@ Herbal formulas are one of the most commonly used components of Chinese Medicine
 
 By utilizing natural herbs alongside other modalities such as nutritional therapy and acupuncture treatments, practitioners help individuals manage these conditions effectively with minimal side effects.
 
+![Chinese Medicine for Metabolic Disorders - header image](/images/articles/chinese-medicine-for-metabolic-disorders.png)
+
 ## How Chinese Medicine Reduces Symptoms
 
 Whole herb extracts used in Chinese herbology make use of each herb's unique phytokine profile to treat all manner of diseases.

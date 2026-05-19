@@ -39,6 +39,8 @@ A BPD person will often have a distorted or unclear self-image. They often feel 
 
 People with Borderline Personality Disorder often engage in reckless behaviors like gambling, speeding, binge eating, substance abuse, fighting, and unprotected sex. BPD people also struggle with anger management and can lash out at others impulsively.
 
+![Borderline Personality Disorder - header image](/images/articles/borderline-personality-disorder.png)
+
 ### Self-Harm and Suicide
 
 Self-harm is prevalent in those with BPD. An estimated 65-80% of those with the diagnosis engage in self-harm such as cutting or burning themselves. Emotional dysregulation, intense anger, and a negative self-image all contribute to this.

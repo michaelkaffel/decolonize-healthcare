@@ -26,6 +26,8 @@ In Chinese medicine, there are four main causes of empty heat:
 
 All of these factors can disrupt the balance between yin and yang energy in the body, resulting in an accumulation of "empty" heat which cannot be released from the system naturally.
 
+![Understanding Empty Heat in Chinese Medicine - header image](/images/articles/understanding-empty-heat-in-chinese-medicine.png)
+
 ## Treatment for Empty Heat
 
 The goal of treatment for empty heat is to restore balance between yin and yang energy while also relieving symptoms associated with this type of imbalance — in essence, too much yang and not enough yin.

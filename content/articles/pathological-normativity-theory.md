@@ -59,6 +59,8 @@ This is the central pillar. The dominant US culture — this WEIRD culture — i
 
 These are not bugs. They are features. And they are *pathological.*
 
+![Pathological Normativity Theory: A New Framework for Understanding Neurodiversity - header image](/images/articles/pathological-normativity-theory.png)
+
 ### Pillar Three: Redefining "Divergence" From Constitution to Context
 
 If the culture is pathological, then successfully conforming to it is not a sign of health. This reframes everything we thought we knew about "neurodivergence."

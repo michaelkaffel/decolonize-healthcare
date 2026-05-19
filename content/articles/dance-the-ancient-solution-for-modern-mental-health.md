@@ -35,6 +35,8 @@ A study published in the *American Journal of Preventive Medicine* in 2016 found
 
 Dancing proved to be almost **twice as effective** at preventing heart disease as walking — at the same intensity level. The reason appears to lie in dancing's extraordinary variety of movement — the twisting, pinching, shaking, gliding, reaching, and stretching our body does when we dance, compared to the controlled forward fall of walking.
 
+![Dance: The Ancient Solution for Modern Mental Health - header image](/images/articles/dance-the-ancient-solution-for-modern-mental-health.png)
+
 ## The Mental Effects Are Undeniable
 
 A study from UCLA explored the mental effects of free-form conscious dancing on participants with anxiety, depression, chronic pain, a history of trauma, and a history of addiction. All of these conditions saw vast improvements in over 80% of people.

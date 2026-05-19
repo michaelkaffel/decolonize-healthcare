@@ -37,6 +37,8 @@ Breathing in the wood essential oils from trees, called phytoncides, not only bo
 
 So take those shoes off and walk in the grass for a while. Science supports you.
 
+![Losing Your Mind - Get It Back - header image](/images/articles/losing-your-mind-get-it-back.png)
+
 ## #3 Do Something "Meaningless" (AKA Have Fun!)
 
 Serotonin is released when chilling out and having fun. Serotonin is also the antidote to cortisol — the stress chemical that ramps us up and eventually causes inflammation and tissue breakdown.

@@ -37,6 +37,8 @@ With much experimentation, a more effective protocol was created that includes f
 
 During the crack cocaine epidemic of the mid-80s, the protocol proved just as effective in treating the cravings, dysphasia, and anxiety associated with crack withdrawals. In 1985, the Lincoln detox staff along with other chemical dependency professionals formed the group NADA — the National Acupuncture Detoxification Association. Thousands of practitioners worldwide now use this protocol with life-changing results.
 
+![A Whole Lotta NADA - header image](/images/articles/a-whole-lotta-nada.png)
+
 ## Studies Show…
 
 By 1992, the Lincoln Detox Clinic had successfully helped 15,000 crack patients get sober within a 5-year time span — proving it to be vastly more effective than anything else available at the time. 90% of pregnant women enrolled in the detox program were drug-free by the time they gave birth.

@@ -272,6 +272,31 @@ All `._id` references replaced with `.id` in `Dashboard.jsx` and `server/routes/
 
 ---
 
+### Article Detail Page ✅
+
+Three-component architecture:
+
+ShareButtons.jsx
+- Facebook, X, LinkedIn share links built from window.location.href
+- Copy link with 2s "Copied!" confirmation + clipboard API fallback
+- Inline SVGs — no icon library needed
+
+RecentPosts.jsx
+- 3 cards: thumbnail, date, title, optional excerpt
+- No engagement icons (heart/comment/views dropped)
+- "See all" link to /articles
+- Returns null if no articles passed — safe to render unconditionally
+
+ArticleDetail.jsx
+- coverImage NOT rendered as hero — stays in markdown body wherever author placed it
+- No avatar, no category link, no three-dot menu
+- Author name + date + readTime in a single meta line
+- marked.parse(body) + dangerouslySetInnerHTML — article.css scopes all prose styles
+- scroll-to-top on slug change
+- Assembles: header → body → ShareButtons → NewsletterSignup → RecentPosts
+
+---
+
 ### Bugs fixed
 
 - **`passport.js`** — missing `passport.use(User.createStrategy())` caused `Unknown authentication strategy "local"` error on login

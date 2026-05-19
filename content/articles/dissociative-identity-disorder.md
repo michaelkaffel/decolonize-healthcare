@@ -33,6 +33,8 @@ But this experience goes to a whole different level in people with DID. A hallma
 
 Dissociation can also be associated with out-of-body experiences — feeling detached from their own body, their emotions, or even from the environment they're in.
 
+![Dissociative Identity Disorder - header image](/images/articles/dissociative-identity-disorder.png)
+
 ## Why Dissociation Happens
 
 People who develop DID experience repetitive and often extreme trauma, be it physical and/or emotional, at a very early age — often before age 10. Since as children DID people were unable to get away from the situation physically, their mind created other states of consciousness to allow them to dissociate from the pain and "be" somewhere else — and eventually, someone else.

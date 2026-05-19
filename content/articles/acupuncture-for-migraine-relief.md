@@ -23,6 +23,8 @@ Acupuncture targets specific acupoints on the body to help restore balance and p
 
 For migraine relief, acupuncture targets specific points designed to alleviate pain, improve circulation, and stabilize the nervous system. By gently inserting fine needles into these areas, the treatment helps to clear energy blockages, restore balance, and activate the body's self-healing mechanisms.
 
+![Acupuncture for Migraine Relief - header image](/images/articles/acupuncture-for-migraine-relief.png)
+
 ## A Holistic Approach
 
 A holistic approach to healing is one of the key advantages of acupuncture. Unlike conventional migraine medications, which typically aim to suppress symptoms or numb the pain, acupuncture seeks to understand the body as an interconnected system.

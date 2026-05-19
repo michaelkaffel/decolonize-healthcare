@@ -53,6 +53,8 @@ While roughly 9% of kids diagnosed with ADHD grow out of it, the majority of kid
 
 Individuals can be diagnosed with ADHD presenting as Inattentive, Hyperactive, or **Both.**
 
+![ADHD Your Misunderstood Superpower - header image](/images/articles/adhd-your-misunderstood-superpower.png)
+
 ## The Risks of Not Seeking Treatment
 
 Half of individuals with undiagnosed ADHD will develop a substance use disorder at some point in their lives. The reason: those with ADHD have brains that produce less dopamine, so they crave it and find ways to get it one way or another.

@@ -44,6 +44,8 @@ Stress is a known risk factor and contributing cause for vision issues such as g
 
 **Medications:** Vision issues can be caused or compounded by treatment for anxiety and depression disorders. Tricyclic antidepressants, antipsychotic medications, and SSRIs can all unintentionally negatively impact vision.
 
+![Mental Health Effects of Vision Issues - header image](/images/articles/mental-health-effects-of-vision-issues.png)
+
 ## Blindness Can Make Issues Worse
 
 Blindness, or vision impairment, is listed as one of the top 10 disabilities for those ages 18 and older in the United States. Vision impairment and blindness can make it hard to attend to daily life tasks — including cooking, cleaning, driving, reading, and taking medications.
