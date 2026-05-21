@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Full-stack platform replacing the existing Wix site at `decolonizehealthcare.com`. Handles marketing, free editorial content, newsletter signup, user auth, course purchasing, and gated course content delivery. Wix eliminated entirely.
+Full-stack platform replacing the existing Wix site at `decolonizehealthcare.com`. Handles marketing, free editorial content, newsletter signup, user auth, course purchasing, book purchasing, and gated course content delivery. Wix eliminated entirely.
 
 ---
 
@@ -10,6 +10,9 @@ Full-stack platform replacing the existing Wix site at `decolonizehealthcare.com
 
 - Migrate all existing content off Wix ($200/yr savings)
 - Sell and deliver online courses with video, written content, PDFs, and quizzes
+- Sell Owl's book in three formats — ebook, physical, audiobook — via Stripe Checkout
+- Physical book orders fulfilled by Owl; she receives a Resend email notification on every physical sale
+- Digital formats (ebook, audiobook) delivered via Resend transactional email with GCS signed download link
 - User accounts with enrollment-based content gating
 - Free public content (articles, education pages, book list, partners)
 - Newsletter signup integrated into home page and article pages
@@ -23,6 +26,7 @@ Full-stack platform replacing the existing Wix site at `decolonizehealthcare.com
 | Concern | Tool |
 |---|---|
 | Frontend | React + Redux Toolkit, Vite, Tailwind CSS v3, React Router v7 |
+| SSR / Prerendering | Vike (`vite-plugin-ssr`) — static prerendering for all public SEO routes |
 | Backend | Node.js / Express (ESM), hosted on Google Cloud Run |
 | Database | MongoDB Atlas (users, enrollments, progress, courses) |
 | CMS | Decap CMS — Git-based, free. Markdown files committed to repo, Vercel redeploys on publish. Client edits via `/admin` UI. |
@@ -33,7 +37,39 @@ Full-stack platform replacing the existing Wix site at `decolonizehealthcare.com
 | Video (production) | Bunny Stream (pay-as-you-go, ~$2–6/mo at small scale) |
 | PDF storage | Google Cloud Storage (signed URLs) |
 | Deploy — frontend | Vercel |
-| Deploy — backend | Google Cloud Run |
+| Deploy — backend | Google Cloud Run (source-based deploy via buildpacks — no Dockerfile) |
+
+---
+
+## Prerendering Strategy
+
+Vike (`vite-plugin-ssr`) handles static prerendering at build time. Public SEO-relevant routes get clean static HTML; auth-gated routes remain SPA.
+
+### Prerendered routes (static HTML at build time)
+| Route | Data source |
+|---|---|
+| `/` | Static |
+| `/articles` | Markdown files in repo |
+| `/articles/:slug` | Markdown files in repo — one HTML file per article |
+| `/programs` | MongoDB — fetched at build time |
+| `/programs/:slug` | MongoDB — fetched at build time, one HTML file per course |
+| `/book` | Static / hardcoded |
+| `/about` | Decap markdown |
+| `/education` | Static |
+| `/education/:slug` | Decap markdown |
+| `/books` | Decap markdown |
+| `/partners` | Decap markdown |
+
+**Note on `/programs` and `/programs/:slug`:** course data is fetched from MongoDB at build time. A redeploy is required when the course catalogue changes. This is acceptable given infrequent updates.
+
+### SPA routes (no prerender)
+| Route | Reason |
+|---|---|
+| `/dashboard` | Auth-gated, no SEO value |
+| `/login` | Auth page |
+| `/register` | Auth page |
+| `/courses/:slug/learn` | Enrollment-gated course player |
+| `/courses/:slug/learn/:lessonId` | Enrollment-gated lesson view |
 
 ---
 
@@ -67,8 +103,9 @@ Client will eventually create/publish via Decap admin. Developer uploads all ini
 
 ### Newsletter
 Signup form embedded on: home page hero/footer, article pages (inline CTA), dedicated `/newsletter` route (optional).
-Form POSTs to `POST /api/newsletter/subscribe` → server forwards to chosen email service API.
-**Requires service decision before implementation.** Candidates: Mailchimp, Kit, Resend.
+Form POSTs to `POST /api/newsletter/subscribe` → server forwards to Resend API.
+
+**Service: Resend** — consistent with other projects in the portfolio. Lazy initialization via `getResend()` factory (same pattern as Stripe + GCS). Audience/contacts feature used to store subscribers. Transactional confirmation email sent on signup.
 
 ---
 
@@ -91,6 +128,8 @@ decolonize-healthcare/
 │   ├── books/
 │   └── partners/
 ├── server/
+│   ├── config/
+│   │   └── book.js             # Book variant config (Price IDs, GCS paths, shipping flags)
 │   ├── models/
 │   ├── routes/
 │   ├── middleware/
@@ -189,7 +228,8 @@ decolonize-healthcare/
 | `/articles/:slug` | Individual article | Decap markdown |
 | `/education` | Education landing (links to sub-sections) | Static |
 | `/education/:slug` | Sub-section page (Childhood Adversity, etc.) | Decap markdown |
-| `/books` | Book list | Decap markdown |
+| `/books` | Book list / reading recommendations | Decap markdown |
+| `/book` | Owl's book — landing page + format selector + buy buttons | Static / hardcoded |
 | `/partners` | Partners | Decap markdown |
 | `/programs` | Course catalogue | MongoDB API |
 | `/programs/:slug` | Course landing + buy button | MongoDB API |
@@ -236,18 +276,17 @@ React app reads markdown files at build time via `import.meta.glob` (Vite) or at
 ## Newsletter
 
 **Endpoint:** `POST /api/newsletter/subscribe`
-- Body: `{ email: string, name?: string }`
+- Body: `{ email: string, firstName?: string, lastName?: string }`
 - Validates email format
-- Forwards to chosen email service API
+- Forwards to Resend API — adds contact to audience, sends confirmation email
 - Returns `200` on success, `400` on invalid email, `409` if already subscribed
-- Anti-enumeration: `409` uses same generic copy as success on the frontend ("Check your inbox!")
+- Anti-enumeration: `409` uses same generic copy as success on the frontend
 
 **Frontend placements:**
-- Home page — hero section or dedicated strip
 - Article pages — inline CTA after article body
-- Footer — one-line email input across all pages
-
-**Service: Resend** — consistent with other projects in the portfolio. Lazy initialization via `getResend()` factory (same pattern as Stripe + GCS). Audience/contacts feature used to store subscribers. Transactional confirmation email sent on signup.
+- Articles list — below article grid
+- Home page — hero section or dedicated strip (not yet built)
+- Footer — one-line email input across all pages (not yet built)
 
 ---
 
@@ -261,7 +300,7 @@ React app reads markdown files at build time via `import.meta.glob` (Vite) or at
 
 ---
 
-## Payment Flow (Stripe)
+## Payment Flow (Courses)
 
 ```
 1. User clicks "Buy Course" on /programs/:slug
@@ -272,6 +311,58 @@ React app reads markdown files at build time via `import.meta.glob` (Vite) or at
 ```
 
 Enrollment created in webhook handler only — never on frontend redirect.
+
+---
+
+## Payment Flow (Book)
+
+```
+1. User selects variant (ebook / physical / audiobook) on /book
+2. POST /api/checkout/create-book-session { variant }
+3. Server looks up Price ID + config from BOOK_VARIANTS
+4. Client redirects to Stripe hosted checkout
+   - Physical only: shipping address collection enabled
+5. POST /api/webhooks/stripe → branches on session.metadata.type === 'book'
+   - Physical: send Owl fulfillment notification email via Resend
+   - Ebook / Audiobook: generate 24hr GCS signed URL, send buyer delivery email via Resend
+   - All variants: send buyer purchase confirmation email via Resend
+```
+
+No user account required for book purchase. Buyer email captured by Stripe Checkout.
+Variants are strictly separate — no digital bundling with physical purchase.
+
+---
+
+## Book Store
+
+One product, three variants with separate prices. No DB model needed — variants are hardcoded in a server-side config file.
+
+**`server/config/book.js`**
+```js
+export const BOOK_VARIANTS = {
+  ebook: {
+    stripePriceId: process.env.STRIPE_BOOK_EBOOK_PRICE_ID,
+    requiresShipping: false,
+    gcsPath: 'book/ebook.pdf',
+  },
+  physical: {
+    stripePriceId: process.env.STRIPE_BOOK_PHYSICAL_PRICE_ID,
+    requiresShipping: true,
+    gcsPath: null,
+  },
+  audiobook: {
+    stripePriceId: process.env.STRIPE_BOOK_AUDIOBOOK_PRICE_ID,
+    requiresShipping: false,
+    gcsPath: 'book/audiobook.zip',
+  },
+};
+```
+
+Stripe product and all three Price IDs created once in the Stripe dashboard (Owl's account). Price IDs stored in env vars — no dynamic pricing, no DB writes.
+
+**Separate route** — `POST /api/checkout/create-book-session` kept separate from `POST /api/checkout/create-session` (courses) to keep logic clean. Both mounted under `/api/checkout`.
+
+**Signed URL expiry** — 24 hours for book downloads (vs. 15 minutes for course PDFs) to account for email delivery delay before buyer opens link.
 
 ---
 
@@ -325,15 +416,31 @@ checkEnrollment middleware, gated lesson routes, quiz submission, GCS signed URL
 - [x] Scaffold, Redux slices, design system, layout components
 - [x] Auth pages (Login, Register)
 - [x] Dashboard
+- [x] Article detail page (`/articles/:slug`)
+- [x] Articles list page (`/articles`)
+- [x] Programs catalogue (`/programs`) — course grid, buy button, enrolled state
+- [ ] Vike (`vite-plugin-ssr`) integration + prerender config
 - [ ] Home page (hero, about strip, newsletter signup)
-- [ ] Public content pages (Articles list + detail, Education landing + sub-pages, Books, Partners, About)
-- [ ] Programs catalogue + course landing page + buy button
-- [ ] Course player (video + content + PDF + quiz)
-- [ ] Newsletter subscribe endpoint + frontend form
-- [ ] Decap CMS config + content schema (so content can be loaded as pages are built)
+- [ ] Programs landing page (`/programs/:slug`) — course detail + buy button
+- [ ] Course player (`/courses/:slug/learn` + `/:lessonId`)
+- [ ] Education landing + sub-pages (`/education`, `/education/:slug`)
+- [ ] Books page (`/books`)
+- [ ] Partners page (`/partners`)
+- [ ] About page (`/about`)
+- [ ] Book landing page (`/book`) — format selector, three buy buttons, book info
+- [ ] Newsletter subscribe endpoint (`POST /api/newsletter/subscribe`) + Resend wiring
+- [ ] Decap CMS config + content schema
+- [ ] `POST /api/checkout/create-book-session` route
+- [ ] Webhook handler branch for book orders (fulfillment email to Owl, delivery email to buyer)
+- [ ] GCS assets uploaded — ebook PDF, audiobook file(s)
+- [ ] Resend transactional emails — fulfillment alert to Owl + delivery email to buyer
 
 ### Phase 6 — CI/CD + Deploy 🔲
-GitHub Actions, Cloud Run deploy, Vercel deploy, domain migration, env vars.
+1. Cloud Run backend deploy (source-based, no Dockerfile)
+2. Vercel frontend deploy
+3. GitHub Actions deploy jobs
+4. Domain migration from Wix
+5. Environment variables + secrets
 
 ### Phase 7 — Client CMS Handoff 🔲
 - Load initial article and education content (developer-uploaded)
@@ -354,8 +461,11 @@ GOOGLE_CLIENT_SECRET
 GOOGLE_CALLBACK_URL
 STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET
+STRIPE_BOOK_EBOOK_PRICE_ID
+STRIPE_BOOK_PHYSICAL_PRICE_ID
+STRIPE_BOOK_AUDIOBOOK_PRICE_ID
 GCS_BUCKET_NAME
-NEWSLETTER_API_KEY        # Mailchimp / Kit / Resend — TBD
+NEWSLETTER_API_KEY        # Resend
 BUNNY_API_KEY             # production only
 CLIENT_URL
 ```
@@ -372,10 +482,17 @@ VITE_BUNNY_STREAM_URL     # production only
 ## Key Architectural Principles
 
 - Quiz answers never leave the server
-- PDFs served via short-lived signed GCS URLs only
-- Enrollment created in Stripe webhook handler only
+- PDFs served via short-lived signed GCS URLs only (15 min for course PDFs, 24 hr for book downloads)
+- Enrollment created in Stripe webhook handler only — never on frontend redirect
+- Book orders handled in webhook handler only — no fulfillment on frontend redirect
 - Video source abstracted behind `videoSource` — swap YouTube for Bunny with no component changes
 - Decap for editorial content, MongoDB for transactional/course data — clean separation
+- Book variants hardcoded in server config — no DB model needed for a single product
+- No account required for book purchase — buyer email captured by Stripe
+- Variants strictly separate — no digital bundling with physical book purchase
 - `checkEnrollment` middleware reusable across all course content routes
 - Client self-publishing deferred to post-launch — developer uploads all initial content
 - Lazy SDK initialization for Stripe + GCS clients
+- Public SEO routes prerendered as static HTML via Vike at build time — SPA only for auth-gated routes
+- `/programs` and `/programs/:slug` fetch from MongoDB at build time — redeploy required on course catalogue changes (acceptable)
+- Cloud Run deployed via source-based buildpacks — no Dockerfile required

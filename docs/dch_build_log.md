@@ -145,6 +145,8 @@
 - Both routes mounted in `index.js`: `/api/checkout` and `/api/webhooks`
 - Full end-to-end test deferred to Phase 5 when browser auth + buy button are available
 
+---
+
 ## Phase 4 — Content Delivery ✅
 
 ### checkEnrollment Middleware (`server/middleware/checkEnrollment.js`)
@@ -182,6 +184,8 @@
 - Fetches course with `.select('+modules.lessons.pdfs.gcsPath')` — raw GCS path only loaded server-side
 - Generates v4 signed URL with 15-minute expiry via `@google-cloud/storage`
 - Returns `{ url }` for client to open directly
+
+---
 
 ## Phase 5 — Frontend (in progress)
 
@@ -274,30 +278,104 @@ All `._id` references replaced with `.id` in `Dashboard.jsx` and `server/routes/
 
 ### Article Detail Page ✅
 
-Three-component architecture:
+**`client/src/utils/markdown.js`**
+- `import.meta.glob` with `?raw` + `eager: true` — all articles parsed at module init, no runtime re-parsing
+- Uses `front-matter` package (already in deps) for YAML frontmatter parsing
+- Glob path: `'../../../content/articles/*.md'` — reaches repo root from `client/src/utils/`
+- `vite.config.js` updated with `server.fs.allow: ['..']` to permit Vite dev server to serve files above `client/` project root
+- `getAllArticles()` — returns sorted array of frontmatter attributes, no body
+- `getArticleBySlug(slug)` — returns full article object including body string
+- `front-matter` triggers a harmless `buffer` browser warning — cosmetic only, no functional impact
 
-ShareButtons.jsx
-- Facebook, X, LinkedIn share links built from window.location.href
-- Copy link with 2s "Copied!" confirmation + clipboard API fallback
-- Inline SVGs — no icon library needed
+**`client/src/utils/formatDate.js`**
+- Shared date formatting utility — appends `T12:00:00` to date strings to prevent UTC midnight timezone shift
+- Imported by `Article.jsx` and `RecentPosts.jsx`
 
-RecentPosts.jsx
-- 3 cards: thumbnail, date, title, optional excerpt
-- No engagement icons (heart/comment/views dropped)
-- "See all" link to /articles
-- Returns null if no articles passed — safe to render unconditionally
+**`client/src/pages/Article.jsx`**
+- Matches existing route `articles/:slug` in `App.jsx`
+- `react-markdown` + `remark-gfm` for body rendering — no `dangerouslySetInnerHTML`
+- Cover image NOT rendered from frontmatter — placed inline in markdown body by author wherever they choose
+- No avatar, no category link, no three-dot share modal — dropped per design spec
+- Header: tags, H1 title, optional subtitle, author name + date + read time (single line, no avatar)
+- Assembles: header → `<hr>` → article body → `ShareButtons` → `NewsletterSignup` → `RecentPosts`
+- `useEffect` scroll-to-top on slug change
 
-ArticleDetail.jsx
-- coverImage NOT rendered as hero — stays in markdown body wherever author placed it
-- No avatar, no category link, no three-dot menu
-- Author name + date + readTime in a single meta line
-- marked.parse(body) + dangerouslySetInnerHTML — article.css scopes all prose styles
-- scroll-to-top on slug change
-- Assembles: header → body → ShareButtons → NewsletterSignup → RecentPosts
+**`client/src/components/ShareButtons.jsx`**
+- Facebook, X, LinkedIn share links built from `window.location.href`
+- Copy link button with 2s "Copied!" confirmation + `clipboard.writeText` async with `execCommand` fallback
+- All icons inline SVG — no icon library needed
+- Arrow function component, `export default` at bottom of file
+
+**`client/src/components/RecentPosts.jsx`**
+- Receives `articles` array as prop from `Article.jsx` (current slug already filtered out, sliced to 3)
+- Cards: thumbnail, date, title, optional excerpt — no heart/comment/view icons
+- "See all" link to `/articles`
+- Returns `null` if empty array passed — safe to render unconditionally
+
+**`client/src/styles/article.css`**
+- Scoped prose styles under `.article-body` selector
+- Uses `@apply` with existing brand tokens (`brand-crimson`, `brand-blush`, `brand-cream`, `brand-teal`)
+- `pre code` rule resets inline code styles inside fenced blocks
+- Imported locally in `Article.jsx` only — not global
+
+**Packages added**
+- `react-markdown`
+- `remark-gfm`
+
+**Bugs fixed during build**
+- `articles/:slug` route path was missing the `s` — matched `article/:slug` instead, causing NotFound
+- `getAllArticlesBySlug` had `attributes.slig` typo — slug lookup always returned `null`
+- `react-markdown` swap left orphaned `marked.parse(body)` call — caused ReferenceError
+- `brand-forest` used throughout — token does not exist in `tailwind.config.js`; replaced with `brand-crimson`
+- `handleCopy` in `ShareButtons` missing `async` keyword — `await` inside non-async function caused parse error
+- Import paths for `ShareButtons`/`RecentPosts` in `Article.jsx` used `./` instead of `../components/`
 
 ---
 
-### Bugs fixed
+### Articles List Page ✅
+
+**`client/src/pages/Articles.jsx`**
+- Markdown files parsed at module init via `import.meta.glob` + `front-matter` — same pattern as `Article.jsx`
+- `fmt()` inline date formatter (locale `en-US`, no separate utility needed here)
+- Featured article: first in sorted array rendered as a large horizontal card (`md:flex-row`, `md:w-2/5` image)
+- Remaining articles rendered in a responsive grid (`sm:grid-cols-2 lg:grid-cols-3`)
+- `ArticleCard` component handles both featured and standard layouts via `featured` boolean prop
+- Cover image falls back to `<Placeholder>` — gradient tile with article title text, no broken image states
+- Tags: first tag only displayed as an uppercase label above the title
+- `NewsletterSignup` rendered below the grid with `mt-10` spacing
+- Page background `bg-brand-cream2`
+
+**`client/src/components/NewsletterSignup.jsx`**
+- Fields: `firstName`, `lastName`, `email` — all in a single `flex-row` form on `sm:` and up
+- Posts to `POST /api/newsletter/subscribe` — endpoint not yet implemented; form shows error state until wired up
+- Four states: `idle`, `loading`, `success`, `error`
+- Success state replaces form with inline confirmation copy — no page navigation
+- `409` (already subscribed) and other non-ok responses use `data.message` if present, fall back to generic copy
+- `className` prop forwarded to wrapper `<div>` for spacing control at call sites
+- Used in: `Article.jsx` (after article body), `Articles.jsx` (below grid)
+
+---
+
+### Programs Page ✅
+
+**`client/src/pages/Programs.jsx`**
+- Fetches courses via `fetchCourses` thunk on mount (skips if already loaded — `status === 'idle'` guard)
+- Hero: `bg-brand-gold` banner with SVG illustration background (`/illustrations/programs-hero.svg`)
+- Heading + description strip below hero, same gold background, centered
+- Course grid: `sm:grid-cols-2`, `max-w-4xl` container
+- Empty state and loading state handled inline
+- `CourseCard` sub-component — thumbnail, title, description (`line-clamp-3`), price, CTA
+- CTA logic:
+  - Enrolled → "Go to course" link to `/courses/:slug/learn` (`bg-brand-green`)
+  - Authenticated but not enrolled → `BuyButton` (`bg-brand-crimson`)
+  - Unauthenticated → "Enroll now" link to `/register` (`bg-brand-crimson`)
+- `BuyButton` sub-component — `POST /api/checkout/create-session`, redirects to `data.url` on success
+- Enrollment check uses `enrolledCourseIds` Set built from `state.enrollments.items`
+- Enrolled courses fetched from Redux store — assumes `fetchEnrollments` has already been called (dispatched on auth in `userSlice` or `Dashboard`)
+
+---
+
+### Bugs fixed (global)
 
 - **`passport.js`** — missing `passport.use(User.createStrategy())` caused `Unknown authentication strategy "local"` error on login
 - **`LocalStrategy`** — `passport-local` defaults to `username` field; replaced `User.createStrategy()` with explicit `new LocalStrategy({ usernameField: 'email' }, User.authenticate())` so email is used for login
@@ -305,6 +383,10 @@ ArticleDetail.jsx
 - **`ProtectedRoute`** — race condition on refresh: `fetchSession` dispatched but redirect fired before it resolved; fixed by treating `status === 'idle' && user === null` as loading state
 - **`auth.js`** — `_password` typo in login route destructuring meant password was never passed to Passport
 - **`Layout.jsx`** — `<main>` needed `min-h-screen flex flex-col` to keep footer below fold on short pages
+- **`App.jsx`** — `articles/:slug` route path was `article/:slug` (missing `s`) — all article detail links resolved to NotFound
+- **`markdown.js`** — `attributes.slig` typo in `getArticleBySlug` meant slug lookup always returned `null`
+
+---
 
 ## Phase 6 — CI/CD + Deploy 🔲
 1. GitHub Actions deploy job
