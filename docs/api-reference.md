@@ -181,6 +181,37 @@ Create a Stripe Checkout Session for a course purchase.
 
 ---
 
+### POST /api/checkout/create-book-session
+
+Create a Stripe Checkout Session for a book purchase. No account required.
+
+**Auth:** None
+
+**Request body:**
+```json
+{
+  "variant": "ebook | physical | audiobook"
+}
+```
+
+**Response:**
+```json
+{
+  "url": "https://checkout.stripe.com/..."
+}
+```
+
+**Notes:**
+- `physical` variant enables shipping address collection on the Stripe-hosted checkout page
+- Price ID resolved server-side from `BOOK_VARIANTS` config — not supplied by client
+- Session metadata includes `{ type: 'book', variant }` for webhook handler routing
+
+**Errors:**
+- `400` — variant missing or invalid
+- `500` — server error
+
+---
+
 ## Webhooks
 
 ### POST /api/webhooks/stripe
@@ -192,12 +223,22 @@ Stripe webhook endpoint. Called by Stripe, not by the client.
 **Request body:** Raw JSON (parsed by `express.raw()`, not `express.json()`)
 
 **Handled events:**
-- `checkout.session.completed` — creates Enrollment document from session metadata (`userId`, `courseId`)
+
+`checkout.session.completed` — branches on `session.metadata.type`:
+
+**`type === 'course'`**
+- Creates Enrollment document from session metadata (`userId`, `courseId`)
+
+**`type === 'book'`**
+- Reads `variant` from `session.metadata`
+- `physical` → sends fulfillment notification email to Owl via Resend (buyer name, email, shipping address, variant, order total)
+- `ebook` / `audiobook` → generates 24hr GCS signed URL, sends delivery email to buyer via Resend
+- All variants → sends purchase confirmation email to buyer via Resend
 
 **Response:**
 - `200` — `{ received: true }`
 - `400` — invalid signature
-- `500` — enrollment creation failed
+- `500` — handler failed
 
 ---
 
@@ -254,6 +295,8 @@ Get lesson completion counts for an enrolled course. Used by the Dashboard to di
 - `403` — not enrolled
 - `404` — course not found
 - `500` — server error
+
+---
 
 ## Lessons (Protected)
 

@@ -1,0 +1,63 @@
+.article-body h1 {
+    @apply text-3xl font-bold text-brand-crimson mt-10 mb-4 leading-tight;
+}
+
+.article-body h2 {
+    @apply text-2xl font-bold text-brand-crimson mt-10 mb-4 leading-snug;
+}
+
+.article-body h3 {
+    @apply text-xl font-semibold text-brand-crimson mt-7 mb-3;
+}
+
+.article-body p {
+    @apply text-gray-700 mb-5 leading-relaxed text-base;
+}
+
+.article-body ul {
+    @apply list-disc pl-6 mb-5 space-y-2 text-gray-700;
+}
+
+.article-body ol {
+    @apply list-decimal pl-6 mb-5 space-y-2 text-gray-700;
+}
+
+.article-body li {
+    @apply leading-relaxed;
+}
+
+.article-body blockquote {
+    @apply border-l-4 border-brand-crimson/40 pl-5 italic text-gray-600 my-6 bg-gray-50 py-3 pr-4 rounded-r-lg;
+}
+
+.article-body a {
+    @apply text-brand-crimson underline underline-offset-2 hover:opacity-70 transition-opacity;
+}
+
+.article-body strong {
+    @apply font-semibold text-gray-900;
+}
+
+.article-body em {
+    @apply italic;
+}
+
+.article-body hr {
+    @apply my-10 border-gray-200;
+}
+
+.article-body img {
+    @apply w-full rounded-xl object-cover my-8 mx-auto;
+}
+
+.article-body pre {
+    @apply bg-gray-900 text-gray-100 p-5 rounded-xl overflow-x-auto mb-5 text-sm;
+}
+
+.article-body code {
+    @apply bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.article-body pre code {
+    @apply bg-transparent text-inherit p-0 rounded-none;
+}
