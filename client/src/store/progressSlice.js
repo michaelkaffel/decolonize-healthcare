@@ -3,7 +3,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 export const fetchProgress = createAsyncThunk(
     'progress/fetchAll',
     async (courseId) => {
-        const res = await fetch(`/api/courses/${courseId}/lessons/progress`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/courses/${courseId}/lessons/progress`, {
             credentials: 'include',
         });
         if (!res.ok) throw new Error ('Failed to fetch progress');

@@ -4,7 +4,7 @@ export const fetchSession = createAsyncThunk(
     'user/fetchSession',
     async () => {
         try {
-            const res = await fetch('/api/auth/me', {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
                 credentials: 'include'
             })
             if (!res.ok) return null;
@@ -18,7 +18,7 @@ export const fetchSession = createAsyncThunk(
 export const logout = createAsyncThunk(
     'user/logout',
     async () => {
-        const res = await fetch('/api/auth/logout', {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
             method: 'POST',
             credentials: 'include'
         });

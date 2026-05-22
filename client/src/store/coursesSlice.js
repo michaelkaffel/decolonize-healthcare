@@ -3,7 +3,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 export const fetchCourses = createAsyncThunk(
     'courses/fetchAll',
     async () => {
-        const res = await fetch('/api/courses');
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/courses`);
         if (!res.ok) throw new Error('Failed to fetch courses');
         return res.json();
     });
