@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchEnrollments } from '../store/enrollmentsSlice';
 
@@ -8,7 +8,8 @@ const EnrollButton = ({ course, className = '', variant = 'detail' }) => {
     const { data: user } = useSelector((state) => state.user);
     const { items: enrollments } = useSelector((state) => state.enrollments);
 
-    const enrolled = enrollments.some((e) => e.course.id === course.id);
+    const location = useLocation;
+    const enrolled = enrollments.some((e) => e.course?.id === course.id);
     const isFree = course.price === 0;
 
     const base = `rounded-full px-6 py-3 text-sm font-medium text-white transition-colors ${className}`;
@@ -24,13 +25,13 @@ const EnrollButton = ({ course, className = '', variant = 'detail' }) => {
         );
     }
 
-    if (!user || !enrolled && variant === 'card') {
+    if (variant === 'card') {
         return (
             <Link
                 to={`/programs/${course.slug}`}
                 className={`${base} bg-brand-crimson hover:bg-brand-coral`}
             >
-                {enrolled ? 'Go to course' : 'Learn more'}
+                Learn more
             </Link>
         );
     }
@@ -43,7 +44,7 @@ const EnrollButton = ({ course, className = '', variant = 'detail' }) => {
             >
                 Login to enroll
             </Link>
-        )
+        );
     }
 
     if (isFree) {
@@ -60,7 +61,7 @@ const EnrollButton = ({ course, className = '', variant = 'detail' }) => {
                     navigate('/dashboard');
                 }
             } catch (err) {
-                console.error('Free enrollment error', err)
+                console.error('Free enrollment error', err);
             }
         };
 
@@ -94,7 +95,7 @@ const EnrollButton = ({ course, className = '', variant = 'detail' }) => {
             onClick={handleBuy}
             className={`${base} bg-brand-crimson hover:bg-brand-coral`}
         >
-            Buy Now
+            Buy now
         </button>
     );
 };

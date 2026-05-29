@@ -63,7 +63,7 @@ const CourseCard = ({ course }) => {
     return (
         <div className='flex flex-col rounded-2xl bg-white shadow-sm overflow-hidden'>
             {course.thumbnail && (
-                <Link to={`/programs/$${course.slug}`}>
+                <Link to={`/programs/${course.slug}`}>
                     <img
                         src={course.thumbnail}
                         alt={course.title}
@@ -82,7 +82,7 @@ const CourseCard = ({ course }) => {
                 </p>
                 <div className='mt-auto flex items-center justify-between gap-4'>
                     <span className='text-lg font-semibold text-gray-900'>{price}</span>
-                    <EnrollButton course={course}/>
+                    <EnrollButton course={course} variant='card' />
                 </div>
             </div>
         </div>
