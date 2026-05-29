@@ -1015,7 +1015,8 @@ export const courseData = {
   "title": "Meditation Exploration",
   "slug": "meditation-exploration",
   "description": "A 3-week guided meditation program to help you build a sustainable sitting practice.",
+  "longDescription": "Meditation Exploration is a 21-day guided program designed to help you build a sustainable sitting practice from the ground up. Whether you've never meditated before or you're returning after a long break, this program meets you exactly where you are.\n\nEach day includes a short sitting meditation and a mindfulness check-in — simple, repeatable practices that build on each other over three weeks. In the first week you'll establish the foundation: how to sit, how to follow the breath, and how to work with a wandering mind. Week two introduces metta — the practice of generating compassion for yourself and others. Week three brings in vipassana, a body-scanning technique that deepens your awareness and grounds your practice in direct physical experience.\n\nBy Day 21 you'll have a complete toolkit: breath awareness, metta, and vipassana — the three pillars of a balanced meditation practice. Most importantly, you'll have the daily habit.\n\nNo experience required. No special equipment. Just 10-25 minutes a day.",
   "price": 0,
   "thumbnail": "/images/courses/meditation-program.webp",
-  "published": false
+  "published": true
 };

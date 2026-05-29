@@ -2,8 +2,10 @@ import mongoose from 'mongoose';
 
 const toJSON = {
     transform(doc, ret) {
-        ret.id = ret._id.toString();
-        delete ret._id;
+        if (ret._id) {
+            ret.id = ret._id.toString();
+            delete ret._id;
+        }
         delete ret.__v;
     }
 }
@@ -27,7 +29,7 @@ const quizQuestionSchema = new mongoose.Schema(
 const surveyQuestionSchema = new mongoose.Schema(
     {
         prompt: { type: String, required: true },
-        type: { type: String, enum: ['multiple_choice', 'open_text'], required: true},
+        type: { type: String, enum: ['multiple_choice', 'open_text'], required: true },
         options: [String],
     },
     { _id: true, toJSON }
@@ -80,6 +82,7 @@ const courseSchema = new mongoose.Schema(
         price: { type: Number, required: true },
         published: { type: Boolean, default: false },
         thumbnail: { type: String, default: '' },
+        longDescription: { type: String, default: '' },
         modules: [moduleSchema],
     },
     { timestamps: true, toJSON }
