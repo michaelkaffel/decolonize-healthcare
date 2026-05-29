@@ -445,6 +445,43 @@ URL expires after 15 minutes.
 
 ---
 
+---
+
+### POST /api/courses/:courseId/lessons/:lessonId/survey
+
+Submit survey responses for a lesson. No grading — all responses stored as-is.
+
+**Auth:** Session cookie + active enrollment
+
+**Request body:**
+```json
+{
+  "answers": [
+    { "questionId": "string", "value": "Just Right" },
+    { "questionId": "string", "value": "Felt calm and focused today." }
+  ]
+}
+```
+
+`value` is always a string — either the selected option text (multiple_choice) or free text (open_text).
+
+**Response:**
+```json
+{
+  "submittedAt": "ISO date"
+}
+```
+
+Submitting a survey counts as lesson completion for progress tracking.
+
+**Errors:**
+- `400` — answers missing or wrong count
+- `401` — not authenticated
+- `403` — not enrolled
+- `404` — course or lesson not found
+
+---
+
 ## Health
 
 ### GET /api/health

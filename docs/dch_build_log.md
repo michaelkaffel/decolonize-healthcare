@@ -375,6 +375,50 @@ All `._id` references replaced with `.id` in `Dashboard.jsx` and `server/routes/
 
 ---
 
+---
+
+## Phase 5 (continued) — Course Content Pipeline ✅
+
+### Content Strategy Decision
+- First course: "Meditation Exploration" — 21-day program, 3 weeks
+- Content sourced from existing Wix program (Wix stock template — to be rewritten by Owl in her voice)
+- Structure: Day 1–21 as modules, each with 2 lesson + 2 survey lessons (4 lessons/day), 86 lessons total
+- No videos, no PDFs, no quizzes for this course — lesson content + surveys only
+
+### Survey Schema (new)
+- `survey` field added to `lessonSchema` in `Course.js` alongside existing `quiz` field
+- Survey questions have two types: `multiple_choice` (options array, no correct answer) and `open_text` (free text, no options)
+- New `SurveyResponse` model (`server/models/SurveyResponse.js`):
+  ```js
+  {
+    user: ObjectId,
+    course: ObjectId,
+    lesson: ObjectId,
+    answers: [{ questionId: ObjectId, value: String }],
+    submittedAt: Date
+  }
+  ```
+- `value` always a string — either selected option text or open text response
+- New route: `POST /api/courses/:courseId/lessons/:lessonId/survey`
+- Survey responses stored for future engagement analytics (per-user history, aggregate trends)
+- Completing a survey counts as lesson completion for progress tracking purposes
+
+### Content Tooling (`dc-scrape-project/` — outside repo)
+- `scrape-program.mjs` — Puppeteer scraper (not used — Wix participant page requires login)
+- `parse-course.mjs` — converts Google Doc plain text export to seed-ready JS object
+  - Handles: `MODULE:`, `LESSON:`, `CONTENT:`, `SURVEY:`, `SURVEY QUESTION (multiple_choice/open_text)`, `---` separators
+  - Strips BOM from Google Docs export
+  - Outputs `meditation-program-parsed.mjs` with `courseData` export
+- `meditation-program.txt` — Google Docs plain text export (source of truth for course content)
+- `meditation-program-parsed.mjs` — parser output, copied to `server/scripts/`
+
+### Seed Script — updated (`server/scripts/seedCourse.js`)
+- Imports `courseData` from `meditation-program-parsed.mjs`
+- Replaces dev placeholder course with full 21-day Meditation Exploration course
+- `PUBLISHED: false` — course not visible until content is rewritten and approved by Owl
+
+---
+
 ### Bugs fixed (global)
 
 - **`passport.js`** — missing `passport.use(User.createStrategy())` caused `Unknown authentication strategy "local"` error on login

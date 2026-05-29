@@ -20,7 +20,7 @@ router.get('/:slug', async (req, res) => {
     try {
         const course = await Course.findOne(
             { slug: req.params.slug, published: true },
-            'title slug description price thumbnail modules.title modules.order modules.lessons.title modules.lessons.order'
+            'title slug description longDescription price thumbnail modules._id modules.title modules.order module.lessons._id modules.lessons.title modules.lessons.order'
         );
 
         if (!course) {

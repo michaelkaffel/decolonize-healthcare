@@ -1,0 +1,136 @@
+// parse-course.mjs
+// Converts the Google Doc template (exported as .txt) into a seed-ready JS object
+// Usage: node parse-course.mjs course.txt
+
+import fs from 'fs';
+
+const file = process.argv[2];
+if (!file) { console.error('Usage: node parse-course.mjs <file.txt>'); process.exit(1); }
+
+const raw = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, ''); // strip BOM
+const lines = raw.split('\n');
+
+// Debug: show first 20 lines as the parser sees them
+console.log('--- FIRST 20 LINES ---');
+lines.slice(0, 20).forEach((l, i) => console.log(`${i}: [${l.trim()}]`));
+console.log('----------------------');
+
+const course = { modules: [] };
+let curModule = null, curLesson = null, mode = null, quizBlock = null;
+
+const flush = () => {
+  if (curLesson && curModule) {
+    if (quizBlock) { curLesson.quiz = { questions: quizBlock }; quizBlock = null; }
+    if (curLesson.content) curLesson.content = curLesson.content.trim();
+    curModule.lessons.push(curLesson);
+    curLesson = null; mode = null;
+  }
+};
+
+for (const raw of lines) {
+  const line = raw.trim();
+
+  // Course-level headers
+  if (line.startsWith('# COURSE:')) { course.title = line.replace('# COURSE:', '').trim(); continue; }
+  if (line.startsWith('SLUG:'))        { course.slug = line.replace('SLUG:', '').trim(); continue; }
+  if (line.startsWith('DESCRIPTION:')) { course.description = line.replace('DESCRIPTION:', '').trim(); continue; }
+  if (line.startsWith('PRICE:'))       { course.price = parseInt(line.replace('PRICE:', '').trim()); continue; }
+  if (line.startsWith('THUMBNAIL:'))   { course.thumbnail = line.replace('THUMBNAIL:', '').trim(); continue; }
+  if (line.startsWith('PUBLISHED:'))   { course.published = line.includes('true'); continue; }
+
+  // Module
+  if (line.startsWith('MODULE:')) {
+    flush();
+    curModule = { title: line.replace('MODULE:', '').trim(), order: course.modules.length + 1, lessons: [] };
+    course.modules.push(curModule);
+    continue;
+  }
+
+  // Lesson
+  if (line.startsWith('LESSON:')) {
+    flush();
+    curLesson = { title: line.replace('LESSON:', '').trim(), order: 0, content: '', videoSource: null, videoId: null, pdfs: [], quiz: null };
+    mode = null;
+    continue;
+  }
+
+  if (!curLesson) continue;
+
+  if (line.startsWith('ORDER:') && !line.includes('MODULE')) { curLesson.order = parseInt(line.replace('ORDER:', '').trim()); continue; }
+
+  if (line.startsWith('VIDEO:')) {
+    const url = line.replace('VIDEO:', '').trim();
+    if (url && !url.includes('REPLACE_ME')) {
+      const match = url.match(/(?:v=|youtu\.be\/)([^&\s]+)/);
+      curLesson.videoSource = 'youtube';
+      curLesson.videoId = match ? match[1] : url;
+    }
+    continue;
+  }
+
+  if (line.startsWith('PDF:')) {
+    const parts = line.replace('PDF:', '').split('|');
+    curLesson.pdfs.push({ title: parts[0].trim(), gcsPath: parts[1]?.trim() || '' });
+    continue;
+  }
+
+  if (line.startsWith('CONTENT:')) {
+    mode = 'content';
+    const inline = line.replace('CONTENT:', '').trim();
+    if (inline) curLesson.content = inline;
+    continue;
+  }
+  if (line === 'QUIZ:')     { mode = 'quiz'; quizBlock = []; continue; }
+  if (line === 'NO QUIZ')   { mode = null; continue; }
+  if (line === 'SURVEY:')   { mode = 'survey'; curLesson.survey = { questions: [] }; continue; }
+  if (line === '---')      { flush(); continue; }
+
+  // Content body
+  if (mode === 'content' && line) {
+    curLesson.content += (curLesson.content ? '\n' : '') + line;
+    continue;
+  }
+
+  // Survey parsing
+  if (mode === 'survey') {
+    if (line.startsWith('SURVEY QUESTION (multiple_choice):')) {
+      curLesson.survey.questions.push({ prompt: line.replace('SURVEY QUESTION (multiple_choice):', '').trim(), type: 'multiple_choice', options: [] });
+    } else if (line.startsWith('SURVEY QUESTION (open_text):')) {
+      curLesson.survey.questions.push({ prompt: line.replace('SURVEY QUESTION (open_text):', '').trim(), type: 'open_text' });
+    } else if (/^[A-C]\)/.test(line) && curLesson.survey.questions.length) {
+      const q = curLesson.survey.questions[curLesson.survey.questions.length - 1];
+      if (q.options) q.options.push(line.replace(/^[A-C]\)/, '').trim());
+    }
+    continue;
+  }
+
+  // Quiz parsing
+  if (mode === 'quiz') {
+    if (line.startsWith('Q:')) {
+      quizBlock.push({ prompt: line.replace('Q:', '').trim(), options: [], correctIndex: 0 });
+    } else if (/^[A-D]\)/.test(line) && quizBlock?.length) {
+      const q = quizBlock[quizBlock.length - 1];
+      const isCorrect = line.includes('✓');
+      const optText = line.replace(/^[A-D]\)/, '').replace('✓', '').trim();
+      if (isCorrect) q.correctIndex = q.options.length;
+      q.options.push(optText);
+    }
+  }
+}
+flush();
+
+// Clean up lessons with no quiz
+course.modules.forEach(m => m.lessons.forEach(l => {
+  if (!l.quiz) delete l.quiz;
+  if (!l.pdfs.length) delete l.pdfs;
+  if (!l.videoId) { delete l.videoSource; delete l.videoId; }
+}));
+
+const output = `// Auto-generated by parse-course.mjs
+export const courseData = ${JSON.stringify(course, null, 2)};
+`;
+
+const outFile = file.replace(/\.\w+$/, '') + '-parsed.mjs';
+fs.writeFileSync(outFile, output);
+console.log(`Done — written to ${outFile}`);
+console.log(`Modules: ${course.modules.length}, Lessons: ${course.modules.reduce((a, m) => a + m.lessons.length, 0)}`);

@@ -5,6 +5,7 @@ import checkEnrollment from '../middleware/checkEnrollment.js';
 import Course from '../models/Course.js';
 import LessonProgress from '../models/LessonProgress.js';
 import QuizAttempt from '../models/QuizAttempt.js';
+import SurveyResponse from '../models/SurveyResponse.js';
 
 const router = Router({ mergeParams: true });
 
@@ -108,7 +109,7 @@ router.get(
     }
 );
 
-// GET /api/courses/:courseId/lessons/:lessonsId — single lesson
+// GET /api/courses/:courseId/lessons/:lessonId — single lesson
 router.get(
     '/:lessonId',
     isAuthenticated,
@@ -261,7 +262,58 @@ router.post(
     }
 );
 
-// GET /api/courses/:courseId/lessons/:lessonId/pdf/:pdfId — aigned URL for PDF
+// POST /api/courses/:courseId/lessons/:lessonId/survey — submit survey
+router.post(
+    '/:lessonId/survey',
+    isAuthenticated,
+    checkEnrollment,
+    async (req, res) => {
+        try {
+            const course = await Course.findById(req.params.courseId);
+
+            if (!course) {
+                return res.status(404).json({ message: 'Course not found'});
+            }
+
+            const lesson = findLesson(course, req.params.lessonId);
+
+            if (!lesson || !lesson.survey?.questions?.length) {
+                return res.status(404).json({ message: 'Survey not found' });
+            }
+
+            const { answers } = req.body;
+
+            if (!Array.isArray(answers) || answers.length !== lesson.survey.questions.length) {
+                return res.status(400).json({
+                    message: `Expected ${lesson.survey.questions.length} answers`,
+                });
+            }
+
+            await SurveyResponse.create({
+                user: req.user._id,
+                course: course._id,
+                lesson: lesson._id,
+                answers: answers.map((a) => ({
+                    questionId: a.questionId,
+                    value: a.value,
+                })),
+            });
+
+            await LessonProgress.findOneAndUpdate(
+                { user: req.user._id, course: course._id, lesson: lesson._id },
+                { completedAt: new Date(), quizPassed: false },
+                { upsert: true }
+            );
+
+            res.json({ submittedAt: new Date() })
+        } catch (err) {
+            console.error('Survey submission error:', err);
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+)
+
+// GET /api/courses/:courseId/lessons/:lessonId/pdf/:pdfId — signed URL for PDF
 router.get(
     '/:lessonId/pdf/:pdfId',
     isAuthenticated,
