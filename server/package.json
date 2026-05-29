@@ -6,7 +6,7 @@
         "dev": "nodemon index.js",
         "start": "node index.js",
         "lint": "eslint .",
-        "seed": "node scripts/seedCourse.js"
+        "seed": "node scripts/buildProgramDatabase.js"
     },
     "dependencies": {
         "@google-cloud/storage": "^7.14.0",

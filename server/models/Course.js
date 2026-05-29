@@ -24,6 +24,15 @@ const quizQuestionSchema = new mongoose.Schema(
     { _id: true, toJSON }
 );
 
+const surveyQuestionSchema = new mongoose.Schema(
+    {
+        prompt: { type: String, required: true },
+        type: { type: String, enum: ['multiple_choice', 'open_text'], required: true},
+        options: [String],
+    },
+    { _id: true, toJSON }
+)
+
 const pdfSchema = new mongoose.Schema(
     {
         title: { type: String, required: true },
@@ -47,6 +56,9 @@ const lessonSchema = new mongoose.Schema(
         quiz: {
             questions: [quizQuestionSchema],
         },
+        survey: {
+            questions: [surveyQuestionSchema]
+        }
     },
     { _id: true, toJSON }
 );
