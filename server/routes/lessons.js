@@ -52,11 +52,11 @@ router.get(
             }
 
             const modules = course.modules.map((mod) => ({
-                _id: mod._id,
+                id: mod._id,
                 title: mod.title,
                 order: mod.order,
                 lessons: mod.lessons.map((lesson) => ({
-                    _id: lesson._id,
+                    id: lesson._id,
                     title: lesson.title,
                     order: lesson.order,
                     content: lesson.content,
@@ -64,14 +64,23 @@ router.get(
                     videoId: lesson.videoId,
                     hasQuiz: lesson.quiz?.questions?.length > 0,
                     pdfs: lesson.pdfs.map((pdf) => ({
-                        _id: pdf._id,
+                        id: pdf._id,
                         title: pdf.title,
                     })),
+                    hasSurvey: lesson.survey?.questions?.length > 0,
+                    survey: lesson.survey?.questions.length > 0 ? {
+                        questions: lesson.survey.questions.map((q) => ({
+                            id: q._id,
+                            prompt: q.prompt,
+                            type: q.type,
+                            options: q.options,
+                        }))
+                    } : null,
                     progress: progressMap[lesson._id.toString()] || null,
                 })),
             }));
 
-            res.json({ course: { _id: course._id, title: course.title, slug: course.slug }, modules });
+            res.json({ course: { id: course._id, title: course.title, slug: course.slug }, modules });
         } catch (err) {
             console.error('Error fetching lessons:', err);
             res.status(500).json({ message: 'Server error' });
@@ -85,7 +94,7 @@ router.get(
     isAuthenticated,
     checkEnrollment,
     async (req, res) => {
-        try{
+        try {
             const course = await Course.findById(req.params.courseId, 'modules.lessons._id');
 
             if (!course) {
@@ -135,7 +144,7 @@ router.get(
             });
 
             res.json({
-                _id: lesson._id,
+                id: lesson._id,
                 title: lesson.title,
                 order: lesson.order,
                 content: lesson.content,
@@ -143,9 +152,17 @@ router.get(
                 videoId: lesson.videoId,
                 hasQuiz: lesson.quiz?.questions?.length > 0,
                 pdfs: lesson.pdfs.map((pdf) => ({
-                    _id: pdf._id,
+                    id: pdf._id,
                     title: pdf.title,
                 })),
+                survey: lesson.survey?.questions?.length > 0 ? {
+                    questions: lesson.survey.questions.map((q) => ({
+                        id: q._id,
+                        prompt: q.prompt,
+                        type: q.type,
+                        options: q.options,
+                    }))
+                } : null,
                 progress: progress
                     ? { completedAt: progress.completedAt, quizPassed: progress.quizPassed }
                     : null,
@@ -272,7 +289,7 @@ router.post(
             const course = await Course.findById(req.params.courseId);
 
             if (!course) {
-                return res.status(404).json({ message: 'Course not found'});
+                return res.status(404).json({ message: 'Course not found' });
             }
 
             const lesson = findLesson(course, req.params.lessonId);

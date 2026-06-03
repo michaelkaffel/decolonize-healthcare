@@ -50,11 +50,12 @@ const SurveyQuestion = ({ question, value, onChange, submitted }) => {
 // Main lesson
 const Lesson = ({ lesson, courseId, onComplete, onNext, onPrev, isLast }) => {
 
-    if (!lesson) return null;
-    const alreadyDone = !!lesson.progress?.completedAt;
+    
+    const alreadyDone = !!lesson?.progress?.completedAt;
+    const hasSurvey = (lesson?.survey?.questions?.length ?? 0) > 0;
 
     // Survey state
-    const hasSurvey = lesson.survey?.questions?.length > 0;
+    
     const [answers, setAnswers] = useState({});
     const [surveySubmitted, setSurveySubmitted] = useState(alreadyDone && hasSurvey);
     const [surveyError, setSurveyError] = useState(null);
@@ -64,7 +65,10 @@ const Lesson = ({ lesson, courseId, onComplete, onNext, onPrev, isLast }) => {
     const [completed, setCompleted] = useState(alreadyDone);
     const [completeError, setCompleteError] = useState(null);
 
+    if (!lesson) return null;
+
     const setAnswer = (qId, val) => setAnswers(prev => ({ ...prev, [qId]: val }));
+
 
     // Submit survey
     const submitSurvey = async () => {
