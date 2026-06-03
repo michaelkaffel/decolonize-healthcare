@@ -25,6 +25,13 @@ import NotFound from './pages/NotFound.jsx';
 
 const App = () => (
     <Routes>
+
+        {/* Protected */}
+            <Route element={<ProtectedRoute />}>
+                <Route path="courses/:slug/learn" element={<CourseLearn />} />
+                <Route path="courses/:slug/learn/:lessonId" element={<CourseLearn />} />
+            </Route>
+
         <Route element={<Layout />}>
             {/* Public */}
             <Route index element={<Home />} />
@@ -43,8 +50,6 @@ const App = () => (
             {/* Protected */}
             <Route element={<ProtectedRoute />}>
                 <Route path="dashboard" element={<Dashboard />} />
-                <Route path="courses/:slug/learn" element={<CourseLearn />} />
-                <Route path="courses/:slug/learn/:lessonId" element={<Lesson />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
