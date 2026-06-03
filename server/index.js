@@ -24,7 +24,7 @@ app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
 
 app.use(express.json());
 
-const isProd = process.send.NODE_ENV === 'production';
+const isProd = process.env.NODE_ENV === 'production';
 
 app.use(session({
     secret: process.env.SESSION_SECRET,
