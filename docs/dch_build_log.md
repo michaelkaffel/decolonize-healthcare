@@ -432,9 +432,55 @@ All `._id` references replaced with `.id` in `Dashboard.jsx` and `server/routes/
 
 ---
 
-## Phase 6 — CI/CD + Deploy 🔲
-1. GitHub Actions deploy job
-2. Cloud Run backend deploy
-3. Vercel frontend deploy
+## Phase 6 — CI/CD + Deploy ✅ (partial)
+
+### Frontend Deploy — Vercel ✅
+- Vercel connected directly to GitHub repo — redeploys automatically on every push to `main`
+- No GitHub Actions job needed for frontend; Vercel handles it natively
+- PR preview deployments also enabled automatically
+
+### Backend Deploy — GitHub Actions → Cloud Run ✅
+
+**Workflow file: `.github/workflows/deploy.yml`**
+- Triggers on push to `main` when `server/**` or `.github/workflows/deploy.yml` changes
+- Runs independently of `ci.yml` (parallel, not dependent)
+- Auth via Workload Identity Federation — no long-lived JSON key stored in GitHub secrets
+
+**GCP resources created:**
+- Service account: `github-actions-deploy@decolonize-healthcare.iam.gserviceaccount.com`
+- Workload Identity Pool: `github-pool`
+- OIDC Provider: `github-provider` — issuer `https://token.actions.githubusercontent.com`, attribute condition locked to `michaelkaffel/decolonize-healthcare` repo
+
+**IAM roles granted to service account:**
+- `roles/run.admin`
+- `roles/storage.admin`
+- `roles/iam.serviceAccountUser`
+- `roles/artifactregistry.admin` (upgraded from `writer` — required to create the container repo on first deploy)
+- `roles/cloudbuild.builds.editor`
+
+**GCP APIs enabled during setup (were disabled by default on this project):**
+- `iamcredentials.googleapis.com` — required for Workload Identity Federation token exchange
+- `cloudbuild.googleapis.com` — required for source-based buildpack deploys
+
+**GitHub secrets added:**
+- `GCP_PROJECT_ID` — `decolonize-healthcare`
+- `GCP_WIF_PROVIDER` — full provider resource name
+- `GCP_SA_EMAIL` — service account email
+
+**Deploy command:**
+```
+gcloud run deploy decolonize-healthcare \
+  --source ./server \
+  --region us-central1 \
+  --project $GCP_PROJECT_ID \
+  --quiet
+```
+
+**Notes:**
+- Source-based deploy (buildpacks) — no Dockerfile required, consistent with manual deploy setup
+- Cloud Run environment variables managed separately via `gcloud` CLI — not touched by deploy job
+- First deploy from CI required enabling two APIs and granting additional IAM roles that weren't needed for manual deploys
+
+### Remaining Phase 6 items 🔲
 4. Domain migration from Wix
-5. Environment variables + secrets
+5. Environment variables + secrets (production)
