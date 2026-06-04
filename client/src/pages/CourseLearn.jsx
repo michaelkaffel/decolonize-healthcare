@@ -202,24 +202,30 @@ const CourseLearn = () => {
                             transform transition-transform duration-200
                             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                         `}>
-                    {courseData?.modules.map((mod, mi) => (
-                        <div key={mod.id} className='border-b border-gray-100 last:border-0'>
-                            <div className='px-4 py-3 bg-gray-50'>
-                                <p className='text-xs font-semibold uppercase tracking-wider text-gray-400'>
-                                    Week {mi + 1}
-                                </p>
-                                <p className='text-sm font-medium text-gray-700 mt-0.5'>{mod.title}</p>
+                    {courseData?.modules.map((mod, mi) => {
+                        const weekNum = Math.ceil((mi + 1) / 7);
+                        const prevWeekNum = mi > 0 ? Math.ceil(mi / 7) : 0;
+                        const showWeekHeader = weekNum !== prevWeekNum;
+
+                        return (
+                            <div key={mod.id} className='border-b border-gray-100 last:border-0'>
+                                <div className='px-4 py-3 bg-gray-50'>
+                                    <p className='text-xs font-semibold uppercase tracking-wider text-gray-400'>
+                                        Week {weekNum}
+                                    </p>
+                                    <p className='text-sm font-medium text-gray-700 mt-0.5'>{mod.title}</p>
+                                </div>
+                                {mod.lessons.map(lesson => (
+                                    <LessonRow
+                                        key={lesson.id}
+                                        lesson={lesson}
+                                        active={lesson.id === activeLessonId}
+                                        onClick={goToLesson}
+                                    />
+                                ))}
                             </div>
-                            {mod.lessons.map(lesson => (
-                                <LessonRow
-                                    key={lesson.id}
-                                    lesson={lesson}
-                                    active={lesson.id === activeLessonId}
-                                    onClick={goToLesson}
-                                />
-                            ))}
-                        </div>
-                    ))}
+                        );
+                    })}
                 </aside>
 
                 {/* Main lesson area */}
