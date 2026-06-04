@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { NavLink, Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../store/userSlice'
 
 
 const navLinks = [
@@ -15,6 +16,8 @@ const navLinks = [
 
 const Navbar = () => {
     const user = useSelector(state => state.user.data);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
@@ -25,6 +28,12 @@ const Navbar = () => {
     }, []);
 
     const closeMenu = () => setMenuOpen(false);
+
+    const handleLogout = async () => {
+        closeMenu();
+        await dispatch(logout());
+        navigate('/');
+    };
 
     return (
         <header className={`sticky top-0 z-50 bg-brand-cream transition-shadow duration-200 ${scrolled ? 'shadow-lg' : 'shadow-none'
@@ -63,10 +72,10 @@ const Navbar = () => {
                             >
                                 Dashboard
                             </Link>
-                            <Link
+                            <button
+                                onClick={handleLogout}
                                 className='text-brand-crimson text-center ms-1 text-xs'
-                                to='/'
-                            >Log Out</Link>
+                            >Log Out</button>
                         </>
                     ) : (
                         <Link
@@ -109,7 +118,12 @@ const Navbar = () => {
                     {/* Auth link at top */}
                     {user ? (
                         <>
-                            <p className='text-brand-crimson text-center'>Log Out</p>
+                            <p
+                                onClick={handleLogout}
+                                className='text-brand-crimson text-center'
+                            >
+                                Log Out
+                            </p>
                             <Link
                                 to='/dashboard'
                                 onClick={closeMenu}
