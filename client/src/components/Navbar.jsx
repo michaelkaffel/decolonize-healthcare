@@ -242,7 +242,7 @@ const Navbar = () => {
                                     )}
                                 </div>
                             ) : (
-                                < NavLink
+                                <NavLink
                                     key={to}
                                     to={to}
                                     end={to === '/'}
