@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import Lesson from './Lesson';
 
@@ -224,6 +223,9 @@ const CourseLearn = () => {
                         const prevWeekNum = mi > 0 ? Math.ceil(mi / 7) : 0;
                         const showWeekHeader = weekNum !== prevWeekNum;
                         const isExpanded = expandedModules.has(mi);
+                        const doneLessons = mod.lessons.filter(l => !!l.progress?.completedAt).length;
+                        const totalLessons = mod.lessons.length;
+                        const allDone = doneLessons === totalLessons;
 
                         return (
                             <div key={mod.id} className='border-b border-gray-100 last:border-0'>
@@ -239,7 +241,23 @@ const CourseLearn = () => {
                                     onClick={() => toggleModule(mi)}
                                     className='w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors'
                                 >
-                                    <p className='text-sm font-medium text-gray-700 mt-0.5'>{mod.title}</p>
+                                    <div className='flex items-center gap-2.5'>
+                                        {allDone ? (
+                                            <span className='flex-shrink-0 w-4 h-4 rounded-full bg-brand-crimson border-2 border-brand-crimson flex items-center justify-center'>
+                                                <svg className='w-2.5 h-2.5 text-white' viewBox="0 0 10 10" fill="currentColor">
+                                                    <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            </span>
+                                        ) : doneLessons > 0 ? (
+                                            <span className='flex-shrink-0 text-xs text-gray-400 tabular-nums'>
+                                                {doneLessons}/{totalLessons}
+                                            </span>
+                                        ) : (
+                                            <span className='flex-shrink-0 w-4 h-4 rounded-full border-2 border-gray-300' />
+                                        )}
+                                        <p className='text-sm font-medium text-gray-700 mt-0.5'>{mod.title}</p>
+                                    </div>
+                                    
                                     <svg
                                         className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
                                         fill="none" stroke="currentColor" viewBox="0 0 24 24"
