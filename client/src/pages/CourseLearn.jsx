@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import Lesson from './Lesson';
 
@@ -35,13 +34,32 @@ const CourseLearn = () => {
     const { slug, lessonId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const user = useSelector(s => s.user.data);
 
     const [courseData, setCourseData] = useState(null);
     const [activeLessonId, setActiveLessonId] = useState(lessonId || null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [expandedModules, setExpandedModules] = useState(new Set());
+
+    // Auto-expand whichever day contains the active lesson
+    useEffect(() => {
+        if (!courseData) return;
+        const activeModIdx = courseData.modules.findIndex(m =>
+            m.lessons.some(l => l.id === activeLessonId)
+        );
+        if (activeModIdx !== -1) {
+            setExpandedModules(prev => new Set([...prev, activeModIdx]));
+        }
+    }, [courseData, activeLessonId]);
+
+    const toggleModule = (mi) => {
+        setExpandedModules(prev => {
+            const next = new Set(prev);
+            next.has(mi) ? next.delete(mi) : next.add(mi);
+            return next;
+        });
+    };
 
     // Flatten lessons for east lookup
     const allLessons = courseData
@@ -152,9 +170,7 @@ const CourseLearn = () => {
     );
 
     const activeIdx = allLessons.findIndex(l => l.id === activeLessonId);
-    console.log('activeLesson:', activeLesson, 'activeLessonId:', activeLessonId, 'allLessons length:', allLessons.length);
-    console.log('activeLesson', activeLesson);
-    console.log('lessonId param', lessonId); // whatever you call useParams()
+
     return (
         <div className='h-screen overflow-hidden bg-brand-cream flex flex-col'>
             <header className='sticky top-0 z-30 bg-white border-b border-gray-200 flex items-center px-4 gap-4 h-14'>
@@ -202,24 +218,64 @@ const CourseLearn = () => {
                             transform transition-transform duration-200
                             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                         `}>
-                    {courseData?.modules.map((mod, mi) => (
-                        <div key={mod.id} className='border-b border-gray-100 last:border-0'>
-                            <div className='px-4 py-3 bg-gray-50'>
-                                <p className='text-xs font-semibold uppercase tracking-wider text-gray-400'>
-                                    Week {mi + 1}
-                                </p>
-                                <p className='text-sm font-medium text-gray-700 mt-0.5'>{mod.title}</p>
+                    {courseData?.modules.map((mod, mi) => {
+                        const weekNum = Math.ceil((mi + 1) / 7);
+                        const prevWeekNum = mi > 0 ? Math.ceil(mi / 7) : 0;
+                        const showWeekHeader = weekNum !== prevWeekNum;
+                        const isExpanded = expandedModules.has(mi);
+                        const doneLessons = mod.lessons.filter(l => !!l.progress?.completedAt).length;
+                        const totalLessons = mod.lessons.length;
+                        const allDone = doneLessons === totalLessons;
+
+                        return (
+                            <div key={mod.id} className='border-b border-gray-100 last:border-0'>
+                                {showWeekHeader && (
+                                    <div className='px-4 py-3 bg-gray-50'>
+                                        <p className='text-xs font-semibold uppercase tracking-wider text-gray-400'>
+                                            Week {weekNum}
+                                        </p>
+
+                                    </div>
+                                )}
+                                <button
+                                    onClick={() => toggleModule(mi)}
+                                    className='w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors'
+                                >
+                                    <div className='flex items-center gap-2.5'>
+                                        {allDone ? (
+                                            <span className='flex-shrink-0 w-4 h-4 rounded-full bg-brand-crimson border-2 border-brand-crimson flex items-center justify-center'>
+                                                <svg className='w-2.5 h-2.5 text-white' viewBox="0 0 10 10" fill="currentColor">
+                                                    <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            </span>
+                                        ) : doneLessons > 0 ? (
+                                            <span className='flex-shrink-0 text-xs text-gray-400 tabular-nums'>
+                                                {doneLessons}/{totalLessons}
+                                            </span>
+                                        ) : (
+                                            <span className='flex-shrink-0 w-4 h-4 rounded-full border-2 border-gray-300' />
+                                        )}
+                                        <p className='text-sm font-medium text-gray-700 mt-0.5'>{mod.title}</p>
+                                    </div>
+                                    
+                                    <svg
+                                        className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                {isExpanded && mod.lessons.map(lesson => (
+                                    <LessonRow
+                                        key={lesson.id}
+                                        lesson={lesson}
+                                        active={lesson.id === activeLessonId}
+                                        onClick={goToLesson}
+                                    />
+                                ))}
                             </div>
-                            {mod.lessons.map(lesson => (
-                                <LessonRow
-                                    key={lesson.id}
-                                    lesson={lesson}
-                                    active={lesson.id === activeLessonId}
-                                    onClick={goToLesson}
-                                />
-                            ))}
-                        </div>
-                    ))}
+                        );
+                    })}
                 </aside>
 
                 {/* Main lesson area */}
