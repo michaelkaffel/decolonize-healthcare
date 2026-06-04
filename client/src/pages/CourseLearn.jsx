@@ -35,13 +35,32 @@ const CourseLearn = () => {
     const { slug, lessonId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const user = useSelector(s => s.user.data);
 
     const [courseData, setCourseData] = useState(null);
     const [activeLessonId, setActiveLessonId] = useState(lessonId || null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [expandedModules, setExpandedModules] = useState(new Set());
+
+    // Auto-expand whichever day contains the active lesson
+    useEffect(() => {
+        if (!courseData) return;
+        const activeModIdx = courseData.modules.findIndex(m =>
+            m.lessons.some(l => l.id === activeLessonId)
+        );
+        if (activeModIdx !== -1) {
+            setExpandedModules(prev => new Set([...prev, activeModIdx]));
+        }
+    }, [courseData, activeLessonId]);
+
+    const toggleModule = (mi) => {
+        setExpandedModules(prev => {
+            const next = new Set(prev);
+            next.has(mi) ? next.delete(mi) : next.add(mi);
+            return next;
+        });
+    };
 
     // Flatten lessons for east lookup
     const allLessons = courseData
@@ -152,9 +171,7 @@ const CourseLearn = () => {
     );
 
     const activeIdx = allLessons.findIndex(l => l.id === activeLessonId);
-    console.log('activeLesson:', activeLesson, 'activeLessonId:', activeLessonId, 'allLessons length:', allLessons.length);
-    console.log('activeLesson', activeLesson);
-    console.log('lessonId param', lessonId); // whatever you call useParams()
+
     return (
         <div className='h-screen overflow-hidden bg-brand-cream flex flex-col'>
             <header className='sticky top-0 z-30 bg-white border-b border-gray-200 flex items-center px-4 gap-4 h-14'>
@@ -206,16 +223,31 @@ const CourseLearn = () => {
                         const weekNum = Math.ceil((mi + 1) / 7);
                         const prevWeekNum = mi > 0 ? Math.ceil(mi / 7) : 0;
                         const showWeekHeader = weekNum !== prevWeekNum;
+                        const isExpanded = expandedModules.has(mi);
 
                         return (
                             <div key={mod.id} className='border-b border-gray-100 last:border-0'>
-                                <div className='px-4 py-3 bg-gray-50'>
-                                    <p className='text-xs font-semibold uppercase tracking-wider text-gray-400'>
-                                        Week {weekNum}
-                                    </p>
+                                {showWeekHeader && (
+                                    <div className='px-4 py-3 bg-gray-50'>
+                                        <p className='text-xs font-semibold uppercase tracking-wider text-gray-400'>
+                                            Week {weekNum}
+                                        </p>
+
+                                    </div>
+                                )}
+                                <button
+                                    onClick={() => toggleModule(mi)}
+                                    className='w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors'
+                                >
                                     <p className='text-sm font-medium text-gray-700 mt-0.5'>{mod.title}</p>
-                                </div>
-                                {mod.lessons.map(lesson => (
+                                    <svg
+                                        className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                {isExpanded && mod.lessons.map(lesson => (
                                     <LessonRow
                                         key={lesson.id}
                                         lesson={lesson}
