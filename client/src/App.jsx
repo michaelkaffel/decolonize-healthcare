@@ -22,39 +22,43 @@ import CourseLearn from './pages/CourseLearn.jsx';
 import Lesson from './pages/Lesson.jsx';
 
 import NotFound from './pages/NotFound.jsx';
+import useScrollToTop from './utils/scrollToTop.js';
 
-const App = () => (
-    <Routes>
+const App = () => {
+    useScrollToTop();
+    return (
+        <Routes>
 
-        {/* Protected */}
+            {/* Protected */}
             <Route element={<ProtectedRoute />}>
                 <Route path="courses/:slug/learn" element={<CourseLearn />} />
                 <Route path="courses/:slug/learn/:lessonId" element={<CourseLearn />} />
             </Route>
 
-        <Route element={<Layout />}>
-            {/* Public */}
-            <Route index element={<Home />} />
-            <Route path="articles" element={<Articles />} />
-            <Route path="articles/:slug" element={<Article />} />
-            <Route path="programs" element={<Programs />} />
-            <Route path="programs/:slug" element={<Program />} />
-            <Route path="education" element={<Education />} />
-            <Route path="education/:slug" element={<EducationPage />} />
-            <Route path="books" element={<Books />} />
-            <Route path="partners" element={<Partners />} />
-            <Route path="about" element={<About />} />
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
+            <Route element={<Layout />}>
+                {/* Public */}
+                <Route index element={<Home />} />
+                <Route path="articles" element={<Articles />} />
+                <Route path="articles/:slug" element={<Article />} />
+                <Route path="programs" element={<Programs />} />
+                <Route path="programs/:slug" element={<Program />} />
+                <Route path="education" element={<Education />} />
+                <Route path="education/:slug" element={<EducationPage />} />
+                <Route path="books" element={<Books />} />
+                <Route path="partners" element={<Partners />} />
+                <Route path="about" element={<About />} />
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
 
-            {/* Protected */}
-            <Route element={<ProtectedRoute />}>
-                <Route path="dashboard" element={<Dashboard />} />
+                {/* Protected */}
+                <Route element={<ProtectedRoute />}>
+                    <Route path="dashboard" element={<Dashboard />} />
+                </Route>
+
+                <Route path="*" element={<NotFound />} />
             </Route>
-
-            <Route path="*" element={<NotFound />} />
-        </Route>
-    </Routes>
-);
+        </Routes>
+    )
+};
 
 export default App;
