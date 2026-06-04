@@ -24,12 +24,6 @@ const navLinks = [
     { to: '/partners', label: 'Partners' },
 ];
 
-const linkClass = ({ isActive }) =>
-    `px-3 py-2 rounded-md font-medium transition-colors ${isActive
-        ? 'bg-brand-blush text-brand-crimson'
-        : 'text-gray-600 hover:bg-brand-blush hover:text-brand-crimson'
-    }`;
-
 const Navbar = () => {
     const user = useSelector(state => state.user.data);
     const dispatch = useDispatch();
@@ -40,8 +34,8 @@ const Navbar = () => {
     const [scrolled, setScrolled] = useState(false);
 
     useEffect(() => {
-        setMenuOpen(false);
-        setEduOpen(false);
+        setMenuOpen(false); // eslint-disable-line react-hooks/set-state-in-effect
+        setEduOpen(false); // eslint-disable-line react-hooks/set-state-in-effect
     }, [location.pathname])
 
     useEffect(() => {
@@ -248,7 +242,7 @@ const Navbar = () => {
                                     )}
                                 </div>
                             ) : (
-                                < NavLink
+                                <NavLink
                                     key={to}
                                     to={to}
                                     end={to === '/'}

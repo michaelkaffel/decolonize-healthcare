@@ -35,7 +35,7 @@ const Register = () => {
                 return;
             }
             dispatch(setUser(data));
-            navigate('/dashboard');
+            navigate(redirect);
         } catch {
             setError('Unable to reach the server. Please try again.')
         } finally {
