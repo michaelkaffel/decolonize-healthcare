@@ -83,12 +83,10 @@
 - Non-unique index on `{ user, lesson }` — multiple attempts allowed
 - `attemptedAt` timestamp
 
-### Seed Script (`server/scripts/seedCourse.js`)
+### Seed Script (`server/scripts/buildProgramDatabase.js`)
 - Run with `cd server && npm run seed`
-- Wipes all courses (`deleteMany`) then inserts one dev course — idempotent
-- Dev course: "Decolonizing Your Health Practice", 2 modules, 3 lessons total
-- Includes quiz questions with `correctIndex`, PDF references with `gcsPath`, YouTube video placeholders
-- Price set to 9900 (cents) to match Stripe convention
+- Wipes all courses (`deleteMany`) then inserts courses from `server/scripts/content/` — idempotent
+- Named export aliasing: `import { courseData as meditationExploration }` from content files
 
 ### Public Course Routes (`server/routes/courses.js`)
 - `GET /api/courses` — returns published courses with summary fields only (`title`, `slug`, `description`, `price`, `thumbnail`)
@@ -187,19 +185,26 @@
 
 ---
 
-## Phase 5 — Frontend (in progress)
+## Phase 5 — Frontend ✅
 
 ### Scaffold ✅
-*(existing entry — unchanged)*
+- Vite + React 18 scaffolded under `client/`
+- ESLint config updated with `react/jsx-uses-vars` and `react/jsx-uses-react` rules to prevent false unused-var warnings on JSX components
 
 ### Redux Slices ✅
-*(existing entry — unchanged)*
+- `userSlice` — auth state, `fetchSession`, `login`, `logout` thunks
+- `enrollmentsSlice` — `fetchEnrollments` thunk, stores in `state.items`
+- `progressSlice` — `fetchProgress(courseId)` thunk, stores in `state.byCourse[courseId]`
+- `coursesSlice` — `fetchCourses` thunk for public catalogue
 
 ### Design System ✅
-*(existing entry — unchanged)*
+- Tailwind brand tokens: `brand-crimson`, `brand-gold`, `brand-cream`, `brand-cream2`, `brand-teal`, `brand-blush`, `brand-green`, `brand-blue`
+- Arrow function syntax throughout, `export default` at bottom of files
 
 ### Layout Components ✅
-*(existing entry — unchanged)*
+- `Layout.jsx` — `<main>` with `min-h-screen flex flex-col` keeps footer below fold on short pages
+- `Navbar.jsx` — sticky, scrolled shadow, desktop nav + mobile hamburger
+- `Footer.jsx` — brand links, newsletter one-liner
 
 ---
 
@@ -208,19 +213,20 @@
 **Login (`client/src/pages/Login.jsx`)**
 - Split-screen layout: illustration left (`bg-brand-blush`), form right (`bg-brand-cream`)
 - Google OAuth button + local email/password form
-- Anti-enumeration handled on frontend: checks `data.id` presence rather than `res.ok` (both success and invalid-creds return `200`)
-- On success: `dispatch(setUser(data))` + `navigate('/dashboard')`
-- `credentials: 'include'` on all fetch calls for session cookie across Vite proxy
+- Reads `?redirect` query param on mount, navigates there after successful auth; param preserved when switching to Register
+- Anti-enumeration handled on frontend: checks `data.id` presence rather than `res.ok`
+- On success: `dispatch(setUser(data))` + `navigate(redirect || '/dashboard')`
+- `credentials: 'include'` on all fetch calls
 
 **Register (`client/src/pages/Register.jsx`)**
 - Same split-screen layout
 - Fields: name, email, password (`minLength={8}`)
-- Username derived from email on backend — not a form field
-- Checks `res.status === 201` for confirmed account creation; `200` = anti-enumeration path
+- `?redirect` param read and forwarded on success — same pattern as Login
+- Checks `res.status === 201` for confirmed account creation
 
 ---
 
-### Backend additions for Dashboard ✅
+### Backend Additions for Dashboard ✅
 
 **`GET /api/enrollments` (`server/routes/enrollments.js`)**
 - Protected by `isAuthenticated`
@@ -231,204 +237,270 @@
 - Protected by `isAuthenticated` + `checkEnrollment`
 - Returns `{ completed, total }` lesson counts for the enrolled course
 - Placed above `/:lessonId` route to prevent `progress` being matched as a lessonId
-- Used by Dashboard to display per-course progress without fetching full lesson content
+
+**`POST /api/enrollments/free` (added to `server/routes/enrollments.js`)**
+- Instant enrollment for `price: 0` courses — no Stripe involved
+- Protected by `isAuthenticated`
+- Validates course exists, is published, and price is 0
+- Creates Enrollment directly (no `stripeSessionId` — uses a placeholder or omits field)
+- Used by `EnrollButton` for free courses
 
 ---
 
-### Redux Slices — updated ✅
-
-**`enrollmentsSlice`**
-- `fetchEnrollments` thunk hits `GET /api/enrollments` with `credentials: 'include'`
-- Stores results in `state.items`
-
-**`progressSlice`**
-- `fetchProgress(courseId)` thunk hits `GET /api/courses/:courseId/lessons/progress`
-- Stores results in `state.byCourse[courseId] = { completed, total }`
-- Fixed from stub: was incorrectly pointing at `GET /api/courses`
-
----
-
-### Dashboard (`client/src/pages/Dashboard.jsx`) ✅
-
-- Fetches enrollments on mount, then dispatches `fetchProgress` per enrolled course
-- Displays course cards with thumbnail, title, description, progress bar, and CTA
-- CTA label cycles: "Start course" / "Continue" / "Review course" based on percent complete
-- Empty state with "Browse courses" CTA linking to `/programs`
-- `firstName` derived from `name` in `userSlice` via `.split(' ')[0]`, falls back to `"there"`
-- Layout: outer `flex-1` div + `min-h-screen` on `<main>` in `Layout.jsx` keeps footer below fold
-
----
-
-### Refactor: Mongoose `toJSON` transforms ✅
+### Mongoose `toJSON` Transforms ✅
 
 Added `toJSON` transform to all schemas — top-level and all subdocuments:
-- `User.js`
-- `Course.js` — top-level + `moduleSchema`, `lessonSchema`, `pdfSchema`, `quizQuestionSchema`
-- `Enrollment.js`
-- `LessonProgress.js`
-- `QuizAttempt.js`
+- `User.js`, `Course.js` (top-level + `moduleSchema`, `lessonSchema`, `pdfSchema`, `quizQuestionSchema`, `surveyQuestionSchema`), `Enrollment.js`, `LessonProgress.js`, `QuizAttempt.js`, `SurveyResponse.js`
 
 Transform: `ret.id = ret._id.toString(); delete ret._id; delete ret.__v;`
 
-`pdfs` array in `Course.js` extracted from inline schema to named `pdfSchema` to support `toJSON`.
+All `._id` references replaced with `.id` throughout frontend and route files.
 
-All `._id` references replaced with `.id` in `Dashboard.jsx` and `server/routes/auth.js`.
+---
+
+### Course Content Pipeline ✅
+
+**Content Strategy**
+- First course: "Meditation Exploration" — 21-day program, 3 weeks, 86 lessons
+- 4 lessons/day: 2 content lessons + 2 survey lessons
+- No videos, no PDFs, no quizzes — lesson content + surveys only
+- `published: true`, `price: 0` (free course)
+- Thumbnail: `/images/courses/meditation-program.webp`
+- Long description written collaboratively and stored in `longDescription` field
+
+**Survey Schema**
+- `survey` field added to `lessonSchema` in `Course.js` alongside existing `quiz` field
+- `surveyQuestionSchema` — `type` enum: `multiple_choice` or `open_text`; `options` array only for multiple_choice
+- `longDescription` field added to top-level Course schema
+
+**`SurveyResponse` Model (`server/models/SurveyResponse.js`)**
+- `user`, `course`, `lesson` ObjectIds; `answers: [{ questionId, value: String }]`; `submittedAt`
+- `value` always a string — selected option text or free text
+
+**Survey Route (`POST /api/courses/:courseId/lessons/:lessonId/survey`)**
+- No grading — all responses stored as-is
+- Completing a survey upserts `LessonProgress` (counts as lesson completion)
+- Returns `{ submittedAt }`
+
+**Content Tooling (`server/scripts/tools/` — parser; `server/scripts/content/` — output)**
+- `parse-course.mjs` — converts Google Docs plain text export to seed-ready JS object
+- `meditation-exploration.mjs` — parser output, named export `courseData`
+
+**Seed Script (`server/scripts/buildProgramDatabase.js`)**
+- Renamed from `seedCourse.js`
+- Imports named exports aliased per course: `import { courseData as meditationExploration } from './content/meditation-exploration.mjs'`
+
+---
+
+### Dashboard ✅
+
+- Fetches enrollments on mount, then dispatches `fetchProgress` per enrolled course
+- Course cards: thumbnail, title, description, progress bar, CTA
+- CTA label: "Start course" / "Continue" / "Review course" based on percent complete
+- Empty state with "Browse courses" CTA linking to `/programs`
+- `firstName` derived from `name` via `.split(' ')[0]`, falls back to `"there"`
+
+---
+
+### Programs Catalogue (`client/src/pages/Programs.jsx`) ✅
+
+- Fetches courses via `fetchCourses` on mount (`status === 'idle'` guard)
+- Hero: `bg-brand-gold` banner with SVG illustration
+- Skeleton loading — `SkeletonCard` mirrors `CourseCard` DOM structure, `animate-pulse`; both `'idle'` and `'loading'` states show 4 skeletons to prevent empty-state flash
+- Course grid: `sm:grid-cols-2`, `max-w-4xl`
+- `CourseCard` sub-component — links title/thumbnail to `/programs/:slug` (not directly to Stripe)
+- Uses `EnrollButton` with `variant='card'`
+
+**`EnrollButton` (`client/src/components/EnrollButton.jsx`)**
+- `variant='card'` → "Learn more" link to `/programs/:slug`
+- `variant='detail'` → full enrollment CTA: enrolled → "Go to course" link; free course → free enroll via `POST /api/enrollments/free`; paid + auth → `BuyButton` (POST to checkout); unauthenticated → link to `/register?redirect=...`
+
+---
+
+### Program Detail Page (`client/src/pages/Program.jsx`) ✅
+
+- Route: `/programs/:slug` — public course landing and sales page
+- Fetches course by slug from `GET /api/courses/:slug` (public endpoint — no auth required)
+- Layout: full-width hero (thumbnail image or gold fallback) + two-column content area
+- Left column: long description, module/lesson outline (survey lessons filtered out with label "(Reflection)")
+- Right column: sticky CTA sidebar with price, enrollment count placeholder, `EnrollButton variant='detail'`
+- `Login.jsx` and `Register.jsx` pass `?redirect=/programs/:slug` so post-auth users land back on the course page
 
 ---
 
 ### Article Detail Page ✅
 
 **`client/src/utils/markdown.js`**
-- `import.meta.glob` with `?raw` + `eager: true` — all articles parsed at module init, no runtime re-parsing
-- Uses `front-matter` package (already in deps) for YAML frontmatter parsing
-- Glob path: `'../../../content/articles/*.md'` — reaches repo root from `client/src/utils/`
-- `vite.config.js` updated with `server.fs.allow: ['..']` to permit Vite dev server to serve files above `client/` project root
-- `getAllArticles()` — returns sorted array of frontmatter attributes, no body
-- `getArticleBySlug(slug)` — returns full article object including body string
-- `front-matter` triggers a harmless `buffer` browser warning — cosmetic only, no functional impact
+- `import.meta.glob` with `?raw` + `eager: true` — all articles parsed at module init
+- `getAllArticles()` — sorted array of frontmatter attributes, no body
+- `getArticleBySlug(slug)` — full article object including body string
+- `vite.config.js` updated with `server.fs.allow: ['..']`
 
 **`client/src/utils/formatDate.js`**
-- Shared date formatting utility — appends `T12:00:00` to date strings to prevent UTC midnight timezone shift
-- Imported by `Article.jsx` and `RecentPosts.jsx`
+- Appends `T12:00:00` to date strings to prevent UTC midnight timezone shift
+- Shared utility imported by `Article.jsx` and `RecentPosts.jsx`
 
 **`client/src/pages/Article.jsx`**
-- Matches existing route `articles/:slug` in `App.jsx`
-- `react-markdown` + `remark-gfm` for body rendering — no `dangerouslySetInnerHTML`
-- Cover image NOT rendered from frontmatter — placed inline in markdown body by author wherever they choose
-- No avatar, no category link, no three-dot share modal — dropped per design spec
-- Header: tags, H1 title, optional subtitle, author name + date + read time (single line, no avatar)
+- `react-markdown` + `remark-gfm` for body rendering
+- Header: tags, H1 title, optional subtitle, author + date + read time
 - Assembles: header → `<hr>` → article body → `ShareButtons` → `NewsletterSignup` → `RecentPosts`
-- `useEffect` scroll-to-top on slug change
+- `useEffect` scroll-to-top on slug change (now redundant with global `useScrollToTop`, but harmless)
 
-**`client/src/components/ShareButtons.jsx`**
-- Facebook, X, LinkedIn share links built from `window.location.href`
-- Copy link button with 2s "Copied!" confirmation + `clipboard.writeText` async with `execCommand` fallback
-- All icons inline SVG — no icon library needed
-- Arrow function component, `export default` at bottom of file
+**`client/src/components/ShareButtons.jsx`** — Facebook, X, LinkedIn share links; copy link with 2s confirmation; all inline SVG
 
-**`client/src/components/RecentPosts.jsx`**
-- Receives `articles` array as prop from `Article.jsx` (current slug already filtered out, sliced to 3)
-- Cards: thumbnail, date, title, optional excerpt — no heart/comment/view icons
-- "See all" link to `/articles`
-- Returns `null` if empty array passed — safe to render unconditionally
+**`client/src/components/RecentPosts.jsx`** — 3 recent article cards; returns `null` if empty
 
-**`client/src/styles/article.css`**
-- Scoped prose styles under `.article-body` selector
-- Uses `@apply` with existing brand tokens (`brand-crimson`, `brand-blush`, `brand-cream`, `brand-teal`)
-- `pre code` rule resets inline code styles inside fenced blocks
-- Imported locally in `Article.jsx` only — not global
-
-**Packages added**
-- `react-markdown`
-- `remark-gfm`
-
-**Bugs fixed during build**
-- `articles/:slug` route path was missing the `s` — matched `article/:slug` instead, causing NotFound
-- `getAllArticlesBySlug` had `attributes.slig` typo — slug lookup always returned `null`
-- `react-markdown` swap left orphaned `marked.parse(body)` call — caused ReferenceError
-- `brand-forest` used throughout — token does not exist in `tailwind.config.js`; replaced with `brand-crimson`
-- `handleCopy` in `ShareButtons` missing `async` keyword — `await` inside non-async function caused parse error
-- Import paths for `ShareButtons`/`RecentPosts` in `Article.jsx` used `./` instead of `../components/`
+**`client/src/styles/article.css`** — scoped prose styles under `.article-body`
 
 ---
 
 ### Articles List Page ✅
 
 **`client/src/pages/Articles.jsx`**
-- Markdown files parsed at module init via `import.meta.glob` + `front-matter` — same pattern as `Article.jsx`
-- `fmt()` inline date formatter (locale `en-US`, no separate utility needed here)
-- Featured article: first in sorted array rendered as a large horizontal card (`md:flex-row`, `md:w-2/5` image)
-- Remaining articles rendered in a responsive grid (`sm:grid-cols-2 lg:grid-cols-3`)
-- `ArticleCard` component handles both featured and standard layouts via `featured` boolean prop
-- Cover image falls back to `<Placeholder>` — gradient tile with article title text, no broken image states
-- Tags: first tag only displayed as an uppercase label above the title
-- `NewsletterSignup` rendered below the grid with `mt-10` spacing
-- Page background `bg-brand-cream2`
+- Featured article: first in sorted array, large horizontal card
+- Remaining articles: responsive grid (`sm:grid-cols-2 lg:grid-cols-3`)
+- `ArticleCard` sub-component, `featured` boolean prop
+- Cover image falls back to `<Placeholder>` gradient tile
+- `NewsletterSignup` below grid
 
 **`client/src/components/NewsletterSignup.jsx`**
-- Fields: `firstName`, `lastName`, `email` — all in a single `flex-row` form on `sm:` and up
-- Posts to `POST /api/newsletter/subscribe` — endpoint not yet implemented; form shows error state until wired up
+- Fields: `firstName`, `lastName`, `email` — `flex-row` form on `sm:` and up
+- Posts to `POST /api/newsletter/subscribe` — endpoint not yet implemented
 - Four states: `idle`, `loading`, `success`, `error`
-- Success state replaces form with inline confirmation copy — no page navigation
-- `409` (already subscribed) and other non-ok responses use `data.message` if present, fall back to generic copy
-- `className` prop forwarded to wrapper `<div>` for spacing control at call sites
-- Used in: `Article.jsx` (after article body), `Articles.jsx` (below grid)
 
 ---
 
-### Programs Page ✅
+### Education Section ✅
 
-**`client/src/pages/Programs.jsx`**
-- Fetches courses via `fetchCourses` thunk on mount (skips if already loaded — `status === 'idle'` guard)
-- Hero: `bg-brand-gold` banner with SVG illustration background (`/illustrations/programs-hero.svg`)
-- Heading + description strip below hero, same gold background, centered
-- Course grid: `sm:grid-cols-2`, `max-w-4xl` container
-- Empty state and loading state handled inline
-- `CourseCard` sub-component — thumbnail, title, description (`line-clamp-3`), price, CTA
-- CTA logic:
-  - Enrolled → "Go to course" link to `/courses/:slug/learn` (`bg-brand-green`)
-  - Authenticated but not enrolled → `BuyButton` (`bg-brand-crimson`)
-  - Unauthenticated → "Enroll now" link to `/register` (`bg-brand-crimson`)
-- `BuyButton` sub-component — `POST /api/checkout/create-session`, redirects to `data.url` on success
-- Enrollment check uses `enrolledCourseIds` Set built from `state.enrollments.items`
-- Enrolled courses fetched from Redux store — assumes `fetchEnrollments` has already been called (dispatched on auth in `userSlice` or `Dashboard`)
+**Hub landing page (`client/src/pages/Education.jsx`)**
+- Full-width stacked sections per topic — background image + dark overlay + centered text
+- Card height: `h-64 sm:h-[32rem]` for landscape image handling on mobile
+- Links to 7 sub-pages
 
----
+**Seven static sub-pages (`client/src/pages/education/`)**
+- ChildhoodAdversity, Neurobiology, AnatomyPhysiology, MentalHealth, Movement, ScientificArticle, BehavioralBiology
+- Each: hero section, curated resource links (`Resource` component with emoji, title, URL), embedded YouTube videos (`YouTubeEmbed` component)
+- Content scraped from Wix site — YouTube IDs provided manually for Childhood Adversity and How to Understand a Scientific Article pages
+- Seven stock images: download from Wix CDN, save to `client/public/images/education/`
 
----
-
-## Phase 5 (continued) — Course Content Pipeline ✅
-
-### Content Strategy Decision
-- First course: "Meditation Exploration" — 21-day program, 3 weeks
-- Content sourced from existing Wix program (Wix stock template — to be rewritten by Owl in her voice)
-- Structure: Day 1–21 as modules, each with 2 lesson + 2 survey lessons (4 lessons/day), 86 lessons total
-- No videos, no PDFs, no quizzes for this course — lesson content + surveys only
-
-### Survey Schema (new)
-- `survey` field added to `lessonSchema` in `Course.js` alongside existing `quiz` field
-- Survey questions have two types: `multiple_choice` (options array, no correct answer) and `open_text` (free text, no options)
-- New `SurveyResponse` model (`server/models/SurveyResponse.js`):
-  ```js
-  {
-    user: ObjectId,
-    course: ObjectId,
-    lesson: ObjectId,
-    answers: [{ questionId: ObjectId, value: String }],
-    submittedAt: Date
-  }
-  ```
-- `value` always a string — either selected option text or open text response
-- New route: `POST /api/courses/:courseId/lessons/:lessonId/survey`
-- Survey responses stored for future engagement analytics (per-user history, aggregate trends)
-- Completing a survey counts as lesson completion for progress tracking purposes
-
-### Content Tooling (`dc-scrape-project/` — outside repo)
-- `scrape-program.mjs` — Puppeteer scraper (not used — Wix participant page requires login)
-- `parse-course.mjs` — converts Google Doc plain text export to seed-ready JS object
-  - Handles: `MODULE:`, `LESSON:`, `CONTENT:`, `SURVEY:`, `SURVEY QUESTION (multiple_choice/open_text)`, `---` separators
-  - Strips BOM from Google Docs export
-  - Outputs `meditation-program-parsed.mjs` with `courseData` export
-- `meditation-program.txt` — Google Docs plain text export (source of truth for course content)
-- `meditation-program-parsed.mjs` — parser output, copied to `server/scripts/`
-
-### Seed Script — updated (`server/scripts/seedCourse.js`)
-- Imports `courseData` from `meditation-program-parsed.mjs`
-- Replaces dev placeholder course with full 21-day Meditation Exploration course
-- `PUBLISHED: false` — course not visible until content is rewritten and approved by Owl
+**Navbar Education dropdown**
+- Desktop: CSS `group-hover` dropdown revealing sub-page links
+- Mobile: `eduOpen` accordion state wired to existing toggle (was already defined but unwired)
+- Auto-close on route change via `useEffect` watching `location.pathname`
 
 ---
 
-### Bugs fixed (global)
+### About Page (`client/src/pages/About.jsx`) ✅
 
-- **`passport.js`** — missing `passport.use(User.createStrategy())` caused `Unknown authentication strategy "local"` error on login
-- **`LocalStrategy`** — `passport-local` defaults to `username` field; replaced `User.createStrategy()` with explicit `new LocalStrategy({ usernameField: 'email' }, User.authenticate())` so email is used for login
+- Gold hero + illustration placeholder (`/illustrations/about-hero.svg`)
+- Belief statement strip
+- Content sections: vision, origin story, what we offer
+- Core values/CTA strips
+- Illustration SVG to be dropped in by designer
+
+---
+
+### Books Page (`client/src/pages/Books.jsx`) ✅
+
+- **Referral strip** at top — `bg-brand-cream`, title + tagline + cover image + CTA linking to `rethinkingbroken.com`
+- Cover image: `/images/rethinking-broken-cover.jpg`
+- Reading list below: left-bordered `brand-teal` accent cards, title + author + optional "Start with this one" note badge + description
+- Books: Ishmael, Braiding Sweetgrass, The Body Keeps the Score, In the Realm of Hungry Ghosts, Sapiens, When the Body Says No, and others sourced from Wix page
+
+---
+
+### Partners Page (`client/src/pages/Partners.jsx`) ✅
+
+- Blue (`bg-brand-blue`) hero + illustration placeholder
+- Partner cards with highlights grid (Expertise, Quality & Accreditation, Nationwide Network, Convenient Admissions)
+- Currently one partner: South Jersey Recovery Village (The Recovery Village Cherry Hill at Cooper)
+- Contact URL, phone number, and external links; `target='_blank' rel='noopener noreferrer'` on all external links
+- Data in top-level `partners` array — easy to add more
+
+---
+
+### Home Page (`client/src/pages/Home.jsx`) ✅
+
+- Hero section with illustration + headline + newsletter signup CTA
+- About/mission strip
+- Programs preview section linking to `/programs`
+- Articles preview section linking to `/articles`
+- `NewsletterSignup` component embedded in hero/footer strip
+
+---
+
+### Course Player ✅
+
+**`CourseLearn.jsx` (`client/src/pages/CourseLearn.jsx`)**
+- Route: `/courses/:slug/learn` and `/courses/:slug/learn/:lessonId` — both point to this component (consolidated after React Router conflict caused blank screen)
+- Layout: `h-screen overflow-hidden` — sidebar scrolls independently, main area fills viewport
+- Fetches course by slug (`GET /api/courses/:slug`) then full lesson list (`GET /api/courses/:courseId/lessons`)
+- Sidebar: collapsible day/module tabs via `expandedModules` Set in state
+  - Week labels calculated as `Math.ceil((mi + 1) / 7)` — rendered only when week number changes
+  - Auto-expands active lesson's module on mount and lesson change via `useEffect`
+  - Chevron icon rotates `rotate-180` when open
+  - Three-state completion indicators: empty gray circle (not started), `X/Y` fraction (in-progress), filled crimson checkmark (all done)
+- `LessonRow` sub-component — dot styling consistent with completion indicators
+- Top bar: course title + lesson title
+
+**`Lesson.jsx` (`client/src/pages/Lesson.jsx`)**
+- Renders active lesson content — HTML body via `dangerouslySetInnerHTML`, `article-body` CSS class applied
+- Survey questions: `multiple_choice` rendered as radio buttons, `open_text` as textarea
+- Mark complete button — `POST /api/courses/:courseId/lessons/:lessonId/complete` for non-survey lessons
+- Survey submit — `POST /api/courses/:courseId/lessons/:lessonId/survey`
+- Prev/next navigation buttons
+- All `useState` hooks declared before any conditional early returns (required — CI lint failure otherwise)
+
+---
+
+### Navbar Fixes ✅
+
+- **Logout bug** — desktop and mobile "Log Out" changed from `<Link to='/'>` to `<button onClick={handleLogout}>` dispatching the `logout` thunk. Without the dispatch, Redux `state.user.data` was never cleared so the navbar/header stayed in logged-in state.
+- `useDispatch`, `useNavigate`, and `logout` thunk imported in `Navbar.jsx`
+- `handleLogout` — `closeMenu()` → `dispatch(logout())` → `navigate('/')`
+
+---
+
+### Utility Additions ✅
+
+**`useScrollToTop` (`client/src/utils/scrollToTop.js`)**
+- Custom hook — `useEffect` watches `pathname` and calls `window.scrollTo(0, 0)` on change
+- Called at the top of `App.jsx` (inside router) to cover all route transitions globally
+- `Article.jsx` also has its own slug-change scroll-to-top; both can coexist
+
+---
+
+### Favicon ✅
+
+- Full favicon set generated via realfavicongenerator.net, placed in `client/public/`
+- Files: `favicon.ico`, `favicon.svg`, `favicon-96x96.png`, `apple-touch-icon.png`, `web-app-manifest-192x192.png`, `web-app-manifest-512x512.png`, `site.webmanifest`
+- `client/index.html` updated with all `<link>` tags
+- `site.webmanifest`: `name: "Decolonize Healthcare"`, `short_name: "DCH"`
+
+---
+
+### Bugs Fixed (Phase 5)
+
+- **`passport.js`** — missing `passport.use(User.createStrategy())` caused `Unknown authentication strategy "local"` on login
+- **`LocalStrategy`** — `passport-local` defaults to `username` field; replaced `User.createStrategy()` with explicit `new LocalStrategy({ usernameField: 'email' }, User.authenticate())`
 - **`vite.config.js`** — proxy URL malformed: `'http://:localhost8080'` → `'http://localhost:8080'`
-- **`ProtectedRoute`** — race condition on refresh: `fetchSession` dispatched but redirect fired before it resolved; fixed by treating `status === 'idle' && user === null` as loading state
+- **`ProtectedRoute`** — race condition on refresh: treating `status === 'idle' && user === null` as loading state fixed
 - **`auth.js`** — `_password` typo in login route destructuring meant password was never passed to Passport
-- **`Layout.jsx`** — `<main>` needed `min-h-screen flex flex-col` to keep footer below fold on short pages
-- **`App.jsx`** — `articles/:slug` route path was `article/:slug` (missing `s`) — all article detail links resolved to NotFound
-- **`markdown.js`** — `attributes.slig` typo in `getArticleBySlug` meant slug lookup always returned `null`
+- **`Layout.jsx`** — `<main>` needed `min-h-screen flex flex-col` to keep footer below fold
+- **`App.jsx`** — `articles/:slug` route path was `article/:slug` (missing `s`)
+- **`markdown.js`** — `attributes.slig` typo in `getArticleBySlug`
+- **`App.jsx`** — React Router conflict: `/courses/:slug/learn` and `/courses/:slug/learn/:lessonId` pointed to different components (`CourseLearn` and `Lesson`); consolidated both to `CourseLearn`
+- **`Lesson.jsx`** — hooks called after conditional early return caused CI lint failure; all `useState` calls moved above guard
+- **`CourseLearn.jsx`** — `coueseData` typo in `useEffect` dependency array
+- **`CourseLearn.jsx`** — unused `useSelector` import
+- **`CourseLearn.jsx`** — leftover `console.log` calls
+- **`CourseLearn.jsx`** — assignment `=` instead of strict equality `===` in `allDone` calculation
+- **`CourseLearn.jsx`** — malformed Tailwind class `flex-` with stray hyphen
+- **`Partners.jsx`** — `bt-white` → `bg-white`; `leading-relaced` → `leading-relaxed`; `tartget` → `target`
+- **`Navbar.jsx`** — stray space `< NavLink` in mobile nav map caused parse error
+- **`Navbar.jsx`** — stray `import { isAction } from '@reduxjs/toolkit'` causing mobile rendering failure
+- **Atlas** — stale Enrollment document pointing to deleted course caused Dashboard crash; removed manually via Atlas UI
+- **Dev/prod DB** — dev and prod currently share one MongoDB Atlas database; acknowledged as gap to address before launch
 
 ---
 
@@ -436,14 +508,16 @@ All `._id` references replaced with `.id` in `Dashboard.jsx` and `server/routes/
 
 ### Frontend Deploy — Vercel ✅
 - Vercel connected directly to GitHub repo — redeploys automatically on every push to `main`
-- No GitHub Actions job needed for frontend; Vercel handles it natively
-- PR preview deployments also enabled automatically
+- Root directory set to `client`; Vite detected automatically
+- `VITE_API_URL` env var set to Cloud Run service URL
+- PR preview deployments enabled automatically
+- `vercel.json` at repo root: `{ "rewrites": [{ "source": "/:path*", "destination": "/index.html" }] }` — fixes SPA hard-refresh 404s (the `(.*)` regex syntax was rejected by Vercel's validator; `/:path*` is correct)
 
 ### Backend Deploy — GitHub Actions → Cloud Run ✅
 
 **Workflow file: `.github/workflows/deploy.yml`**
 - Triggers on push to `main` when `server/**` or `.github/workflows/deploy.yml` changes
-- Runs independently of `ci.yml` (parallel, not dependent)
+- Runs independently of `ci.yml` (parallel)
 - Auth via Workload Identity Federation — no long-lived JSON key stored in GitHub secrets
 
 **GCP resources created:**
@@ -452,13 +526,9 @@ All `._id` references replaced with `.id` in `Dashboard.jsx` and `server/routes/
 - OIDC Provider: `github-provider` — issuer `https://token.actions.githubusercontent.com`, attribute condition locked to `michaelkaffel/decolonize-healthcare` repo
 
 **IAM roles granted to service account:**
-- `roles/run.admin`
-- `roles/storage.admin`
-- `roles/iam.serviceAccountUser`
-- `roles/artifactregistry.admin` (upgraded from `writer` — required to create the container repo on first deploy)
-- `roles/cloudbuild.builds.editor`
+- `roles/run.admin`, `roles/storage.admin`, `roles/iam.serviceAccountUser`, `roles/artifactregistry.admin`, `roles/cloudbuild.builds.editor`
 
-**GCP APIs enabled during setup (were disabled by default on this project):**
+**GCP APIs enabled during setup:**
 - `iamcredentials.googleapis.com` — required for Workload Identity Federation token exchange
 - `cloudbuild.googleapis.com` — required for source-based buildpack deploys
 
@@ -476,11 +546,50 @@ gcloud run deploy decolonize-healthcare \
   --quiet
 ```
 
-**Notes:**
-- Source-based deploy (buildpacks) — no Dockerfile required, consistent with manual deploy setup
-- Cloud Run environment variables managed separately via `gcloud` CLI — not touched by deploy job
-- First deploy from CI required enabling two APIs and granting additional IAM roles that weren't needed for manual deploys
+### Cross-Origin Cookie Fix ✅
+- Problem: Cloud Run terminates HTTPS at the load balancer; Express doesn't see HTTPS without `trust proxy`, so `secure: true` cookies were never set
+- Fix: `app.set('trust proxy', 1)` added before session middleware in `server/index.js`
+- Fix: `sameSite: isProd ? 'none' : 'lax'` added to cookie config — required for cross-origin cookie transmission between Vercel frontend and Cloud Run backend
+- `CLIENT_URL` env var on Cloud Run updated to production Vercel URL
+
+### API URL Fix ✅
+- All frontend fetch calls updated from bare relative paths (e.g., `/api/auth/login`) to `${import.meta.env.VITE_API_URL}/api/auth/login`
+- Affected files: `Login.jsx`, `Register.jsx`, `userSlice.js`, `enrollmentsSlice.js`, `progressSlice.js`, `coursesSlice.js`
+- Bare paths hit Vercel instead of Cloud Run in split-deploy setup
 
 ### Remaining Phase 6 items 🔲
 4. Domain migration from Wix
 5. Environment variables + secrets (production)
+6. Separate production MongoDB Atlas database before launch
+
+---
+
+## Phase 7 — Backend Features 🔲
+
+### Book Store
+- `POST /api/checkout/create-book-session` route
+- `server/config/book.js` — `BOOK_VARIANTS` config (Price IDs, GCS paths, shipping flags)
+- Webhook handler branch for `session.metadata.type === 'book'`
+  - Physical → Resend fulfillment notification to Owl (name, email, shipping address, variant, total)
+  - Ebook / Audiobook → 24hr GCS signed URL, Resend delivery email to buyer
+  - All variants → Resend purchase confirmation to buyer
+- GCS assets uploaded — ebook PDF, audiobook file(s)
+- Stripe Price IDs created in Owl's Stripe account (3 variants)
+
+### Newsletter
+- `POST /api/newsletter/subscribe` endpoint + Resend wiring
+- Resend audience/contacts feature for subscriber list
+- Transactional confirmation email on signup
+
+### Decap CMS
+- `client/public/admin/index.html` and `config.yml`
+- Collections: articles, education, books, partners
+- GitHub OAuth for single-editor auth
+
+---
+
+## Phase 8 — Client CMS Handoff 🔲
+- Load initial article and education content (developer-uploaded)
+- Decap admin UI polish
+- Client walkthrough: publish articles, education pages
+- Test full editorial workflow end-to-end

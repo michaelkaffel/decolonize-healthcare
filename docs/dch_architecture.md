@@ -26,50 +26,19 @@ Full-stack platform replacing the existing Wix site at `decolonizehealthcare.com
 | Concern | Tool |
 |---|---|
 | Frontend | React + Redux Toolkit, Vite, Tailwind CSS v3, React Router v7 |
-| SSR / Prerendering | Vike (`vite-plugin-ssr`) — static prerendering for all public SEO routes |
 | Backend | Node.js / Express (ESM), hosted on Google Cloud Run |
 | Database | MongoDB Atlas (users, enrollments, progress, courses) |
 | CMS | Decap CMS — Git-based, free. Markdown files committed to repo, Vercel redeploys on publish. Client edits via `/admin` UI. |
 | Auth | Passport.js — Local + Google OAuth |
 | Payments | Stripe Checkout + webhooks |
-| Newsletter | Resend — transactional + list emails, consistent with other projects in the portfolio |
+| Newsletter | Resend — transactional + list emails |
 | Video (dev) | YouTube unlisted |
 | Video (production) | Bunny Stream (pay-as-you-go, ~$2–6/mo at small scale) |
 | PDF storage | Google Cloud Storage (signed URLs) |
-| Deploy — frontend | Vercel |
+| Deploy — frontend | Vercel (auto-deploy on push to main) |
 | Deploy — backend | Google Cloud Run (source-based deploy via buildpacks — no Dockerfile) |
 
----
-
-## Prerendering Strategy
-
-Vike (`vite-plugin-ssr`) handles static prerendering at build time. Public SEO-relevant routes get clean static HTML; auth-gated routes remain SPA.
-
-### Prerendered routes (static HTML at build time)
-| Route | Data source |
-|---|---|
-| `/` | Static |
-| `/articles` | Markdown files in repo |
-| `/articles/:slug` | Markdown files in repo — one HTML file per article |
-| `/programs` | MongoDB — fetched at build time |
-| `/programs/:slug` | MongoDB — fetched at build time, one HTML file per course |
-| `/book` | Static / hardcoded |
-| `/about` | Decap markdown |
-| `/education` | Static |
-| `/education/:slug` | Decap markdown |
-| `/books` | Decap markdown |
-| `/partners` | Decap markdown |
-
-**Note on `/programs` and `/programs/:slug`:** course data is fetched from MongoDB at build time. A redeploy is required when the course catalogue changes. This is acceptable given infrequent updates.
-
-### SPA routes (no prerender)
-| Route | Reason |
-|---|---|
-| `/dashboard` | Auth-gated, no SEO value |
-| `/login` | Auth page |
-| `/register` | Auth page |
-| `/courses/:slug/learn` | Enrollment-gated course player |
-| `/courses/:slug/learn/:lessonId` | Enrollment-gated lesson view |
+**Note on prerendering:** Vike/vite-plugin-ssr was originally planned for static prerendering of public routes. This was not implemented — the site runs as a pure SPA on Vercel with `vercel.json` rewrites for hard-refresh routing. If SEO prerendering becomes a priority post-launch, Vike can be added at that point.
 
 ---
 
@@ -80,12 +49,12 @@ Vike (`vite-plugin-ssr`) handles static prerendering at build time. Public SEO-r
 | Section | Type | Updated by | How |
 |---|---|---|---|
 | **Articles** | Blog-style posts — regularly updated | Client (eventually) | Decap CMS |
-| **Education** | Permanent sub-pages by topic — rarely updated | Developer initially, client later | Decap CMS |
+| **Education** | Permanent sub-pages by topic — rarely updated | Developer initially, client later | Static React (stable content) |
 | **Programs/Courses** | Course catalogue + landing pages | Developer initially, client later | Decap CMS (metadata) + MongoDB (content) |
-| Books, Partners, About | Static or near-static | Developer | Decap CMS or hardcoded |
+| Books, Partners, About | Static or near-static | Developer | Hardcoded in JSX |
 
-### Education sub-sections (from existing Wix nav)
-Permanent topic pages — not a blog, more like evergreen reference content:
+### Education sub-sections
+Seven permanent topic pages (not a blog — evergreen reference content):
 - Childhood Adversity
 - Anatomy & Physiology
 - Neurobiology
@@ -94,18 +63,15 @@ Permanent topic pages — not a blog, more like evergreen reference content:
 - How to Understand a Scientific Article
 - Behavioral Biology
 
-Each sub-section = its own Decap-managed markdown page, rendered at `/education/:slug`.
-The Education nav item opens a dropdown to these sub-pages (matching current Wix behaviour).
+Implemented as static React components with curated resource links and YouTube embeds — not markdown-driven, because the content (external links, video IDs) is stable and this avoids over-engineering.
 
 ### Articles
-Standard blog. Listed at `/articles`, individual posts at `/articles/:slug`.
-Client will eventually create/publish via Decap admin. Developer uploads all initial content.
+Standard blog. Listed at `/articles`, individual posts at `/articles/:slug`. Parsed at build time via `import.meta.glob` + `front-matter`.
 
 ### Newsletter
-Signup form embedded on: home page hero/footer, article pages (inline CTA), dedicated `/newsletter` route (optional).
-Form POSTs to `POST /api/newsletter/subscribe` → server forwards to Resend API.
+Form POSTs to `POST /api/newsletter/subscribe` → server forwards to Resend API. Not yet implemented.
 
-**Service: Resend** — consistent with other projects in the portfolio. Lazy initialization via `getResend()` factory (same pattern as Stripe + GCS). Audience/contacts feature used to store subscribers. Transactional confirmation email sent on signup.
+**Frontend placements:** Article pages, Articles list, Home page hero, Footer
 
 ---
 
@@ -115,12 +81,17 @@ Form POSTs to `POST /api/newsletter/subscribe` → server forwards to Resend API
 decolonize-healthcare/
 ├── client/
 │   ├── public/
-│   │   └── admin/              # Decap CMS admin UI (index.html + config.yml)
+│   │   ├── admin/              # Decap CMS admin UI (index.html + config.yml)
+│   │   ├── images/             # Static images (education, courses, book cover)
+│   │   └── illustrations/      # Hero SVGs per page
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
+│   │   ├── components/         # Shared components (Navbar, Footer, EnrollButton, etc.)
+│   │   ├── pages/              # Route-level pages
+│   │   │   └── education/      # Seven static education sub-pages
 │   │   ├── store/              # Redux slices
-│   │   └── hooks/
+│   │   ├── styles/             # article.css (scoped prose styles)
+│   │   └── utils/              # markdown.js, formatDate.js, scrollToTop.js
+│   ├── index.html
 │   └── vite.config.js
 ├── content/                    # Decap-managed markdown files (committed to repo)
 │   ├── articles/
@@ -129,11 +100,17 @@ decolonize-healthcare/
 │   └── partners/
 ├── server/
 │   ├── config/
-│   │   └── book.js             # Book variant config (Price IDs, GCS paths, shipping flags)
+│   │   ├── book.js             # Book variant config (Price IDs, GCS paths, shipping flags)
+│   │   └── passport.js
 │   ├── models/
 │   ├── routes/
 │   ├── middleware/
+│   ├── scripts/
+│   │   ├── buildProgramDatabase.js  # Seed script (renamed from seedCourse.js)
+│   │   ├── content/                 # Parsed course content files (e.g., meditation-exploration.mjs)
+│   │   └── tools/                   # parse-course.mjs and other tooling
 │   └── index.js
+├── vercel.json                 # SPA routing rewrites
 └── .github/workflows/
 ```
 
@@ -158,7 +135,8 @@ decolonize-healthcare/
   title: String,
   slug: String,
   description: String,
-  price: Number,          // cents
+  longDescription: String,    // full marketing copy for /programs/:slug
+  price: Number,              // cents
   published: Boolean,
   thumbnail: String,
   modules: [{
@@ -176,6 +154,13 @@ decolonize-healthcare/
           prompt: String,
           options: [String],
           correctIndex: Number   // never sent to client
+        }]
+      },
+      survey: {
+        questions: [{
+          prompt: String,
+          type: 'multiple_choice' | 'open_text',
+          options: [String]     // only for multiple_choice
         }]
       }
     }]
@@ -216,33 +201,44 @@ decolonize-healthcare/
 }
 ```
 
+### SurveyResponse
+```js
+{
+  user: ObjectId,
+  course: ObjectId,
+  lesson: ObjectId,
+  answers: [{ questionId: ObjectId, value: String }],
+  submittedAt: Date
+}
+```
+
 ---
 
 ## Site Structure
 
 ### Public Routes
-| Route | Content | Source |
+| Route | Content | Status |
 |---|---|---|
-| `/` | Home / marketing + newsletter signup | Static + newsletter API |
-| `/articles` | Article list | Decap markdown |
-| `/articles/:slug` | Individual article | Decap markdown |
-| `/education` | Education landing (links to sub-sections) | Static |
-| `/education/:slug` | Sub-section page (Childhood Adversity, etc.) | Decap markdown |
-| `/books` | Book list / reading recommendations | Decap markdown |
-| `/book` | Owl's book — landing page + format selector + buy buttons | Static / hardcoded |
-| `/partners` | Partners | Decap markdown |
-| `/programs` | Course catalogue | MongoDB API |
-| `/programs/:slug` | Course landing + buy button | MongoDB API |
-| `/about` | About | Decap markdown or static |
-| `/login` | Login (local + Google OAuth) | — |
-| `/register` | Registration | — |
+| `/` | Home / marketing + newsletter signup | ✅ |
+| `/articles` | Article list | ✅ |
+| `/articles/:slug` | Individual article | ✅ |
+| `/education` | Education landing (links to sub-sections) | ✅ |
+| `/education/:slug` | Sub-section page (Childhood Adversity, etc.) | ✅ |
+| `/books` | Book list / reading recommendations + referral strip | ✅ |
+| `/book` | Owl's book — landing page + format selector + buy buttons | ✅ |
+| `/partners` | Partners | ✅ |
+| `/programs` | Course catalogue | ✅ |
+| `/programs/:slug` | Course landing + buy button | ✅ |
+| `/about` | About | ✅ |
+| `/login` | Login (local + Google OAuth) | ✅ |
+| `/register` | Registration | ✅ |
 
 ### Protected Routes (auth + enrollment required)
-| Route | Content |
-|---|---|
-| `/dashboard` | Enrolled courses + progress |
-| `/courses/:slug/learn` | Course player |
-| `/courses/:slug/learn/:lessonId` | Individual lesson (video, content, PDF, quiz) |
+| Route | Content | Status |
+|---|---|---|
+| `/dashboard` | Enrolled courses + progress | ✅ |
+| `/courses/:slug/learn` | Course player (redirects to first lesson) | ✅ |
+| `/courses/:slug/learn/:lessonId` | Individual lesson (content, survey, mark complete) | ✅ |
 
 ---
 
@@ -250,67 +246,62 @@ decolonize-healthcare/
 
 Decap runs entirely in the browser — no separate server needed.
 
-**`client/public/admin/index.html`** — loads Decap from CDN
-**`client/public/admin/config.yml`** — defines collections (articles, education, books, partners)
+**`client/public/admin/index.html`** — loads Decap from CDN  
+**`client/public/admin/config.yml`** — defines collections
 
-Authentication via **Netlify Identity** (works on Vercel with a small proxy) or **GitHub OAuth** (client logs into `/admin` with their GitHub account). GitHub OAuth is simpler for a single-editor setup.
+Authentication via GitHub OAuth (simpler for single-editor setup).
 
-Content collections needed:
+Content collections:
 - `articles` — title, slug, publishedAt, tags, body (markdown)
-- `education` — title, slug, category, body (markdown)
-- `books` — title, author, description, link, coverImage
-- `partners` — name, description, url, logo
+- `education` — title, slug, category, body (markdown) *(currently static React — CMS migration deferred)*
+- `books` — title, author, description, link, coverImage *(currently hardcoded in Books.jsx)*
+- `partners` — name, description, url, logo *(currently hardcoded in Partners.jsx)*
 
-React app reads markdown files at build time via `import.meta.glob` (Vite) or at runtime via fetch from `/content/`.
-
-**Content workflow:**
-1. Client logs into `decolonizehealthcare.com/admin`
-2. Creates/edits content in Decap UI
-3. Decap commits markdown file to GitHub repo
-4. Vercel detects push → rebuilds and redeploys frontend (~1 min)
-
-**Phase order:** Set up Decap config and content schema as part of Phase 5. Client self-publishing training deferred to post-launch.
+**Status:** Not yet implemented.
 
 ---
 
 ## Newsletter
 
-**Endpoint:** `POST /api/newsletter/subscribe`
+**Endpoint:** `POST /api/newsletter/subscribe` — **not yet implemented**
 - Body: `{ email: string, firstName?: string, lastName?: string }`
 - Validates email format
 - Forwards to Resend API — adds contact to audience, sends confirmation email
 - Returns `200` on success, `400` on invalid email, `409` if already subscribed
-- Anti-enumeration: `409` uses same generic copy as success on the frontend
 
-**Frontend placements:**
-- Article pages — inline CTA after article body
-- Articles list — below article grid
-- Home page — hero section or dedicated strip (not yet built)
-- Footer — one-line email input across all pages (not yet built)
+**Frontend:** `NewsletterSignup` component exists and is wired into Article, Articles, and Home pages. Form shows error state until endpoint is live.
 
 ---
 
 ## Auth
 
-- `passport-local-mongoose` for local auth
+- `passport-local-mongoose` for local auth with explicit `LocalStrategy({ usernameField: 'email' })`
 - `passport-google-oauth20` for Google login
 - Express sessions with MongoDB session store (`connect-mongo`)
 - Anti-enumeration: identical generic responses regardless of whether email exists
 - `isAuthenticated` middleware on all protected routes
+- `?redirect` query param on Login/Register — post-auth navigation for flows originating from course pages
 
 ---
 
 ## Payment Flow (Courses)
 
 ```
-1. User clicks "Buy Course" on /programs/:slug
+1. User clicks "Enroll" on /programs/:slug
 2. POST /api/checkout/create-session
 3. Client redirects to Stripe hosted checkout
 4. POST /api/webhooks/stripe → create Enrollment
 5. User redirected to /dashboard
 ```
 
-Enrollment created in webhook handler only — never on frontend redirect.
+For free courses (`price: 0`):
+```
+1. User clicks "Enroll for free" on /programs/:slug
+2. POST /api/enrollments/free
+3. Redirect to /courses/:slug/learn
+```
+
+Enrollment created in webhook/route handler only — never on frontend redirect.
 
 ---
 
@@ -328,14 +319,15 @@ Enrollment created in webhook handler only — never on frontend redirect.
    - All variants: send buyer purchase confirmation email via Resend
 ```
 
+**Status:** Frontend `/book` page built. Backend route and webhook handler not yet implemented.
+
 No user account required for book purchase. Buyer email captured by Stripe Checkout.
-Variants are strictly separate — no digital bundling with physical purchase.
 
 ---
 
 ## Book Store
 
-One product, three variants with separate prices. No DB model needed — variants are hardcoded in a server-side config file.
+One product, three variants. No DB model — variants hardcoded in server config.
 
 **`server/config/book.js`**
 ```js
@@ -358,11 +350,9 @@ export const BOOK_VARIANTS = {
 };
 ```
 
-Stripe product and all three Price IDs created once in the Stripe dashboard (Owl's account). Price IDs stored in env vars — no dynamic pricing, no DB writes.
+Stripe Price IDs stored in env vars. Created once in Stripe dashboard (Owl's account).
 
-**Separate route** — `POST /api/checkout/create-book-session` kept separate from `POST /api/checkout/create-session` (courses) to keep logic clean. Both mounted under `/api/checkout`.
-
-**Signed URL expiry** — 24 hours for book downloads (vs. 15 minutes for course PDFs) to account for email delivery delay before buyer opens link.
+**Signed URL expiry** — 24 hours for book downloads (vs. 15 minutes for course PDFs).
 
 ---
 
@@ -412,41 +402,46 @@ Stripe checkout session, webhook handler, enrollment creation.
 ### Phase 4 — Content Delivery ✅
 checkEnrollment middleware, gated lesson routes, quiz submission, GCS signed URLs, progress tracking.
 
-### Phase 5 — Frontend (in progress)
+### Phase 5 — Frontend ✅
 - [x] Scaffold, Redux slices, design system, layout components
-- [x] Auth pages (Login, Register)
+- [x] Auth pages (Login, Register) — with `?redirect` param support
 - [x] Dashboard
 - [x] Article detail page (`/articles/:slug`)
 - [x] Articles list page (`/articles`)
-- [x] Programs catalogue (`/programs`) — course grid, buy button, enrolled state
-- [ ] Vike (`vite-plugin-ssr`) integration + prerender config
-- [ ] Home page (hero, about strip, newsletter signup)
-- [ ] Programs landing page (`/programs/:slug`) — course detail + buy button
-- [ ] Course player (`/courses/:slug/learn` + `/:lessonId`)
-- [ ] Education landing + sub-pages (`/education`, `/education/:slug`)
-- [ ] Books page (`/books`)
-- [ ] Partners page (`/partners`)
-- [ ] About page (`/about`)
-- [ ] Book landing page (`/book`) — format selector, three buy buttons, book info
-- [ ] Newsletter subscribe endpoint (`POST /api/newsletter/subscribe`) + Resend wiring
-- [ ] Decap CMS config + content schema
+- [x] Programs catalogue (`/programs`) — skeleton loading, EnrollButton
+- [x] Programs landing page (`/programs/:slug`) — course detail, sticky CTA sidebar
+- [x] Course player (`/courses/:slug/learn` + `/:lessonId`) — content + survey lessons
+- [x] Education landing + 7 sub-pages (`/education`, `/education/:slug`)
+- [x] Books page (`/books`) — reading list + rethinkingbroken.com referral strip
+- [x] Partners page (`/partners`)
+- [x] About page (`/about`)
+- [x] Home page (`/`)
+- [x] Book landing page (`/book`) — format selector, buy buttons
+- [x] Free enrollment route (`POST /api/enrollments/free`)
+- [x] Favicon
+- [x] `useScrollToTop` utility hook
+
+### Phase 6 — CI/CD + Deploy ✅ (partial)
+- [x] GitHub Actions → Cloud Run backend deploy
+- [x] Vercel frontend deploy
+- [x] `vercel.json` SPA routing fix
+- [x] Cross-origin cookie fix (`trust proxy` + `sameSite: 'none'`)
+- [x] `VITE_API_URL` wired across all fetch calls
+- [ ] Domain migration from Wix
+- [ ] Production environment variables + secrets
+- [ ] Separate production MongoDB Atlas database
+
+### Phase 7 — Backend Features 🔲
 - [ ] `POST /api/checkout/create-book-session` route
-- [ ] Webhook handler branch for book orders (fulfillment email to Owl, delivery email to buyer)
+- [ ] Webhook handler branch for book orders (Resend fulfillment to Owl + delivery to buyer)
 - [ ] GCS assets uploaded — ebook PDF, audiobook file(s)
-- [ ] Resend transactional emails — fulfillment alert to Owl + delivery email to buyer
+- [ ] `POST /api/newsletter/subscribe` + Resend wiring
+- [ ] Decap CMS config + content schema
 
-### Phase 6 — CI/CD + Deploy 🔲
-1. Cloud Run backend deploy (source-based, no Dockerfile)
-2. Vercel frontend deploy
-3. GitHub Actions deploy jobs
-4. Domain migration from Wix
-5. Environment variables + secrets
-
-### Phase 7 — Client CMS Handoff 🔲
+### Phase 8 — Client CMS Handoff 🔲
 - Load initial article and education content (developer-uploaded)
-- Decap admin UI polish
-- Client walkthrough: how to write and publish articles, education pages, courses
-- Test full editorial workflow end-to-end
+- Client walkthrough: write and publish articles
+- Test full editorial workflow
 
 ---
 
@@ -483,16 +478,17 @@ VITE_BUNNY_STREAM_URL     # production only
 
 - Quiz answers never leave the server
 - PDFs served via short-lived signed GCS URLs only (15 min for course PDFs, 24 hr for book downloads)
-- Enrollment created in Stripe webhook handler only — never on frontend redirect
+- Enrollment created in Stripe webhook handler or free-enrollment route only — never on frontend redirect
 - Book orders handled in webhook handler only — no fulfillment on frontend redirect
 - Video source abstracted behind `videoSource` — swap YouTube for Bunny with no component changes
 - Decap for editorial content, MongoDB for transactional/course data — clean separation
 - Book variants hardcoded in server config — no DB model needed for a single product
 - No account required for book purchase — buyer email captured by Stripe
 - Variants strictly separate — no digital bundling with physical book purchase
+- Education pages are static React components, not markdown-driven — pragmatic choice for stable content (curated links, YouTube IDs)
 - `checkEnrollment` middleware reusable across all course content routes
 - Client self-publishing deferred to post-launch — developer uploads all initial content
-- Lazy SDK initialization for Stripe + GCS clients
-- Public SEO routes prerendered as static HTML via Vike at build time — SPA only for auth-gated routes
-- `/programs` and `/programs/:slug` fetch from MongoDB at build time — redeploy required on course catalogue changes (acceptable)
+- Lazy SDK initialization for Stripe, GCS, and Resend clients
+- Pure SPA deployed on Vercel — Vike/SSR prerendering deferred (not implemented)
 - Cloud Run deployed via source-based buildpacks — no Dockerfile required
+- Dev and prod share one MongoDB Atlas database — acknowledged gap; separate prod database needed before launch
