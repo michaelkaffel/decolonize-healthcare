@@ -206,8 +206,6 @@
 - `Navbar.jsx` — sticky, scrolled shadow, desktop nav + mobile hamburger
 - `Footer.jsx` — brand links, newsletter one-liner
 
----
-
 ### Auth Pages ✅
 
 **Login (`client/src/pages/Login.jsx`)**
@@ -215,7 +213,7 @@
 - Google OAuth button + local email/password form
 - Reads `?redirect` query param on mount, navigates there after successful auth; param preserved when switching to Register
 - Anti-enumeration handled on frontend: checks `data.id` presence rather than `res.ok`
-- On success: `dispatch(setUser(data))` + `navigate(redirect || '/dashboard')`
+- On success: `dispatch(setUser(data))` + `navigate(redirect)`
 - `credentials: 'include'` on all fetch calls
 
 **Register (`client/src/pages/Register.jsx`)**
@@ -223,8 +221,6 @@
 - Fields: name, email, password (`minLength={8}`)
 - `?redirect` param read and forwarded on success — same pattern as Login
 - Checks `res.status === 201` for confirmed account creation
-
----
 
 ### Backend Additions for Dashboard ✅
 
@@ -245,8 +241,6 @@
 - Creates Enrollment directly (no `stripeSessionId` — uses a placeholder or omits field)
 - Used by `EnrollButton` for free courses
 
----
-
 ### Mongoose `toJSON` Transforms ✅
 
 Added `toJSON` transform to all schemas — top-level and all subdocuments:
@@ -255,8 +249,6 @@ Added `toJSON` transform to all schemas — top-level and all subdocuments:
 Transform: `ret.id = ret._id.toString(); delete ret._id; delete ret.__v;`
 
 All `._id` references replaced with `.id` throughout frontend and route files.
-
----
 
 ### Course Content Pipeline ✅
 
@@ -290,8 +282,6 @@ All `._id` references replaced with `.id` throughout frontend and route files.
 - Renamed from `seedCourse.js`
 - Imports named exports aliased per course: `import { courseData as meditationExploration } from './content/meditation-exploration.mjs'`
 
----
-
 ### Dashboard ✅
 
 - Fetches enrollments on mount, then dispatches `fetchProgress` per enrolled course
@@ -299,8 +289,6 @@ All `._id` references replaced with `.id` throughout frontend and route files.
 - CTA label: "Start course" / "Continue" / "Review course" based on percent complete
 - Empty state with "Browse courses" CTA linking to `/programs`
 - `firstName` derived from `name` via `.split(' ')[0]`, falls back to `"there"`
-
----
 
 ### Programs Catalogue (`client/src/pages/Programs.jsx`) ✅
 
@@ -315,8 +303,6 @@ All `._id` references replaced with `.id` throughout frontend and route files.
 - `variant='card'` → "Learn more" link to `/programs/:slug`
 - `variant='detail'` → full enrollment CTA: enrolled → "Go to course" link; free course → free enroll via `POST /api/enrollments/free`; paid + auth → `BuyButton` (POST to checkout); unauthenticated → link to `/register?redirect=...`
 
----
-
 ### Program Detail Page (`client/src/pages/Program.jsx`) ✅
 
 - Route: `/programs/:slug` — public course landing and sales page
@@ -325,8 +311,6 @@ All `._id` references replaced with `.id` throughout frontend and route files.
 - Left column: long description, module/lesson outline (survey lessons filtered out with label "(Reflection)")
 - Right column: sticky CTA sidebar with price, enrollment count placeholder, `EnrollButton variant='detail'`
 - `Login.jsx` and `Register.jsx` pass `?redirect=/programs/:slug` so post-auth users land back on the course page
-
----
 
 ### Article Detail Page ✅
 
@@ -352,8 +336,6 @@ All `._id` references replaced with `.id` throughout frontend and route files.
 
 **`client/src/styles/article.css`** — scoped prose styles under `.article-body`
 
----
-
 ### Articles List Page ✅
 
 **`client/src/pages/Articles.jsx`**
@@ -368,8 +350,6 @@ All `._id` references replaced with `.id` throughout frontend and route files.
 - Posts to `POST /api/newsletter/subscribe` — endpoint not yet implemented
 - Four states: `idle`, `loading`, `success`, `error`
 
----
-
 ### Education Section ✅
 
 **Hub landing page (`client/src/pages/Education.jsx`)**
@@ -377,7 +357,7 @@ All `._id` references replaced with `.id` throughout frontend and route files.
 - Card height: `h-64 sm:h-[32rem]` for landscape image handling on mobile
 - Links to 7 sub-pages
 
-**Seven static sub-pages (`client/src/pages/education/`)**
+**Seven static sub-pages (`client/src/pages/EducationPage.jsx`)**
 - ChildhoodAdversity, Neurobiology, AnatomyPhysiology, MentalHealth, Movement, ScientificArticle, BehavioralBiology
 - Each: hero section, curated resource links (`Resource` component with emoji, title, URL), embedded YouTube videos (`YouTubeEmbed` component)
 - Content scraped from Wix site — YouTube IDs provided manually for Childhood Adversity and How to Understand a Scientific Article pages
@@ -388,46 +368,33 @@ All `._id` references replaced with `.id` throughout frontend and route files.
 - Mobile: `eduOpen` accordion state wired to existing toggle (was already defined but unwired)
 - Auto-close on route change via `useEffect` watching `location.pathname`
 
----
-
 ### About Page (`client/src/pages/About.jsx`) ✅
 
 - Gold hero + illustration placeholder (`/illustrations/about-hero.svg`)
 - Belief statement strip
 - Content sections: vision, origin story, what we offer
 - Core values/CTA strips
-- Illustration SVG to be dropped in by designer
-
----
 
 ### Books Page (`client/src/pages/Books.jsx`) ✅
 
-- **Referral strip** at top — `bg-brand-cream`, title + tagline + cover image + CTA linking to `rethinkingbroken.com`
-- Cover image: `/images/rethinking-broken-cover.jpg`
+- Referral strip at top — `bg-brand-cream`, title + tagline + cover image + CTA linking to `rethinkingbroken.com`
+- Cover image: `/images/book.png`
 - Reading list below: left-bordered `brand-teal` accent cards, title + author + optional "Start with this one" note badge + description
-- Books: Ishmael, Braiding Sweetgrass, The Body Keeps the Score, In the Realm of Hungry Ghosts, Sapiens, When the Body Says No, and others sourced from Wix page
-
----
+- Books: Ishmael, Braiding Sweetgrass, Domesticated, American Nations, The Four Agreements, The Alchemist, The Wayfinders, Rethinking Broken
 
 ### Partners Page (`client/src/pages/Partners.jsx`) ✅
 
-- Blue (`bg-brand-blue`) hero + illustration placeholder
-- Partner cards with highlights grid (Expertise, Quality & Accreditation, Nationwide Network, Convenient Admissions)
+- Gold hero + illustration placeholder
+- Partner cards with highlights and support bullet lists
 - Currently one partner: South Jersey Recovery Village (The Recovery Village Cherry Hill at Cooper)
-- Contact URL, phone number, and external links; `target='_blank' rel='noopener noreferrer'` on all external links
 - Data in top-level `partners` array — easy to add more
-
----
+- All external links use `target='_blank' rel='noopener noreferrer'`
 
 ### Home Page (`client/src/pages/Home.jsx`) ✅
 
-- Hero section with illustration + headline + newsletter signup CTA
-- About/mission strip
-- Programs preview section linking to `/programs`
-- Articles preview section linking to `/articles`
-- `NewsletterSignup` component embedded in hero/footer strip
-
----
+- Hero section with image + headline + newsletter signup
+- About/mission strip with contact email
+- `NewsletterSignup` component embedded
 
 ### Course Player ✅
 
@@ -451,15 +418,11 @@ All `._id` references replaced with `.id` throughout frontend and route files.
 - Prev/next navigation buttons
 - All `useState` hooks declared before any conditional early returns (required — CI lint failure otherwise)
 
----
-
 ### Navbar Fixes ✅
 
 - **Logout bug** — desktop and mobile "Log Out" changed from `<Link to='/'>` to `<button onClick={handleLogout}>` dispatching the `logout` thunk. Without the dispatch, Redux `state.user.data` was never cleared so the navbar/header stayed in logged-in state.
 - `useDispatch`, `useNavigate`, and `logout` thunk imported in `Navbar.jsx`
 - `handleLogout` — `closeMenu()` → `dispatch(logout())` → `navigate('/')`
-
----
 
 ### Utility Additions ✅
 
@@ -468,16 +431,12 @@ All `._id` references replaced with `.id` throughout frontend and route files.
 - Called at the top of `App.jsx` (inside router) to cover all route transitions globally
 - `Article.jsx` also has its own slug-change scroll-to-top; both can coexist
 
----
-
 ### Favicon ✅
 
 - Full favicon set generated via realfavicongenerator.net, placed in `client/public/`
 - Files: `favicon.ico`, `favicon.svg`, `favicon-96x96.png`, `apple-touch-icon.png`, `web-app-manifest-192x192.png`, `web-app-manifest-512x512.png`, `site.webmanifest`
 - `client/index.html` updated with all `<link>` tags
 - `site.webmanifest`: `name: "Decolonize Healthcare"`, `short_name: "DCH"`
-
----
 
 ### Bugs Fixed (Phase 5)
 
@@ -500,11 +459,10 @@ All `._id` references replaced with `.id` throughout frontend and route files.
 - **`Navbar.jsx`** — stray space `< NavLink` in mobile nav map caused parse error
 - **`Navbar.jsx`** — stray `import { isAction } from '@reduxjs/toolkit'` causing mobile rendering failure
 - **Atlas** — stale Enrollment document pointing to deleted course caused Dashboard crash; removed manually via Atlas UI
-- **Dev/prod DB** — dev and prod currently share one MongoDB Atlas database; acknowledged as gap to address before launch
 
 ---
 
-## Phase 6 — CI/CD + Deploy ✅ (partial)
+## Phase 6 — CI/CD + Deploy ✅
 
 ### Frontend Deploy — Vercel ✅
 - Vercel connected directly to GitHub repo — redeploys automatically on every push to `main`
@@ -557,10 +515,53 @@ gcloud run deploy decolonize-healthcare \
 - Affected files: `Login.jsx`, `Register.jsx`, `userSlice.js`, `enrollmentsSlice.js`, `progressSlice.js`, `coursesSlice.js`
 - Bare paths hit Vercel instead of Cloud Run in split-deploy setup
 
+### Production Database Separation ✅
+- `decolonize-healthcare-prod` database created in MongoDB Atlas (same cluster, new database)
+- `MONGODB_URI` updated on Vercel (build-time env var) and Cloud Run (runtime env var) to point at prod database
+- Dev database (`decolonize-healthcare`) untouched — dev and prod now fully separated
+- Prod database seeded via temporary swap of `server/.env` MONGODB_URI before reverting to dev URI
+
 ### Remaining Phase 6 items 🔲
-4. Domain migration from Wix
-5. Environment variables + secrets (production)
-6. Separate production MongoDB Atlas database before launch
+- Domain migration from Wix
+- Full production environment variables audit
+
+---
+
+## Phase 6.5 — SEO + Static Site Generation ✅
+
+### SSG Pipeline
+- `entry-server.jsx` — SSR entry point using `renderToString` + `StaticRouter` from `react-router-dom` (React Router v7 — `StaticRouter` is in the main package, not the deprecated `/server` subpath)
+- `entry-client.jsx` — replaces `main.jsx`; uses `hydrateRoot` for prerendered pages, `createRoot` for non-prerendered SPA routes (course player, dashboard); detects prerendering via `rootEl.hasChildNodes()`
+- `client/scripts/prerender.mjs` — build-time script; connects to MongoDB, discovers all public routes (hardcoded static routes + article slugs from filesystem + course slugs from DB), renders each to HTML via `renderToString`, injects `react-helmet-async` tags, writes to `dist/`
+- `vite.config.js` — updated to support dual build output: `dist/` (browser bundle, `isSsrBuild: false`) and `dist-server/` (SSR bundle, `isSsrBuild: true`); fixed pre-existing nested `server.server` bug; fixed `fs.allow: ['...']` (literal string) → `['..']` (parent directory)
+- `index.html` — script tag updated from `main.jsx` to `entry-client.jsx`; `<!--ssr-outlet-->` marker added inside `#root` for prerender injection
+- `package.json` build script: `vite build && vite build --ssr src/entry-server.jsx && node scripts/prerender.mjs`
+- `package.json` `build:ci` script: `vite build` only — skips SSR build and prerender; no DB connection required in CI
+- `.github/workflows/ci.yml` — Build client step changed from `npm run build` to `npm run build:ci`
+- `mongoose` and `dotenv` added as client devDependencies (build-time only, never in browser bundle)
+- `dist/` and `dist-server/` confirmed in `.gitignore` — generated fresh on every Vercel build
+
+### Key Technical Note — Vite 8 + React Router v7
+- Vite 8 uses rolldown under the hood; rolldown's SSR build cannot resolve `react-router-dom/server` subpath
+- Root cause: `react-router-dom/server` subpath was removed in React Router v7 — `StaticRouter` is now exported from the main `react-router-dom` package
+- Fix: changed import from `react-router-dom/server` to `react-router-dom`
+
+### SEO Component
+- `react-helmet-async` added as client dependency
+- `HelmetProvider` added to both `entry-client.jsx` and `entry-server.jsx`; `helmetContext` captures helmet state during `renderToString` for injection into the HTML template
+- `SEO.jsx` — shared component; injects `<title>`, `<meta name="description">`, Open Graph tags, Twitter Card tags, and `<link rel="canonical">` per page
+- All 12 public pages updated with page-specific SEO props:
+  - Static pages: hardcoded title and description props
+  - Article pages: `subtitle → excerpt → DEFAULT_DESC` fallback chain; `excerpt` field added to article frontmatter
+  - Education sub-pages: `meta` map in `EducationPage.jsx` keyed by slug for per-topic titles and descriptions
+  - Program detail pages: live course `title`, `description`, `thumbnail` passed as SEO props
+
+### Bugs Fixed During Pass
+- **`Login.jsx`** — `navigate('/dashboard')` was hardcoded, ignoring `?redirect` query param; fixed to `navigate(redirect)`
+- **`Education.jsx`** — `mx-w-[80%]` → `max-w-[80%]`; `mindfullness` → `mindfulness`
+- **`Books.jsx`** — `src='images/book.png'` missing leading slash → `src='/images/book.png'`
+- **`EducationPage.jsx`** — `clibboard-write` → `clipboard-write` in YouTubeEmbed allow attribute; missing `const { title, description } = meta[slug]` destructuring caused blank page on all education sub-routes
+- **`vite.config.js`** — nested `server: { server: { fs } }` structure meant `fs.allow` was silently never applying
 
 ---
 
