@@ -32,7 +32,7 @@ jobs:
 
       - name: Build client
         working-directory: client
-        run: npm run build
+        run: npm run build:ci
 
       - name: Install server deps
         working-directory: server
