@@ -14,7 +14,4 @@ export default defineConfig(({ isSsrBuild }) => ({
     ssr: {
         noExternal: ['react-helmet-async'],
     },
-    resolve: {
-        conditions: ['browser', 'module', 'import', 'default'],
-    },
 }));
