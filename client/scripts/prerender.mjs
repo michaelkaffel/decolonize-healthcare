@@ -3,12 +3,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const clientDir = path.resolve(__dirname, '..');
-const distDir = path.resolve(clientDir, 'dist');
-const serverDir = path.resolve(clientDir, 'dist-server');
+const clientDir  = path.resolve(__dirname, '..');
+const distDir    = path.resolve(clientDir, 'dist');
+const serverDir  = path.resolve(clientDir, 'dist-server');
 const contentDir = path.resolve(clientDir, '..', 'content', 'articles');
 
-// ENV
+// ─── Env ──────────────────────────────────────────────────────────────────────
 // On Vercel, MONGODB_URI is injected directly. Locally, load from server/.env.
 const envFile = path.resolve(__dirname, '../../server/.env');
 if (fs.existsSync(envFile)) {
@@ -17,9 +17,9 @@ if (fs.existsSync(envFile)) {
 }
 
 const MONGODB_URI = process.env.MONGODB_URI;
-if (!MONGODB_URI) throw new Error('MONGODB_URI  is required for prerendering');
+if (!MONGODB_URI) throw new Error('MONGODB_URI is required for prerendering');
 
-// Route discovery
+// ─── Route discovery ──────────────────────────────────────────────────────────
 
 async function getCourseSlugs() {
     const { default: mongoose } = await import('mongoose');
@@ -27,7 +27,7 @@ async function getCourseSlugs() {
     const Course = mongoose.model('Course', schema);
     await mongoose.connect(MONGODB_URI);
     try {
-        const courses = await Course.find({ published: true }, 'slug').lean()
+        const courses = await Course.find({ published: true }, 'slug').lean();
         return courses.map(c => c.slug);
     } finally {
         await mongoose.disconnect();
@@ -41,7 +41,7 @@ function getArticleSlugs() {
         .map(f => f.replace(/\.md$/, ''));
 }
 
-// Static routes
+// ─── Static routes ────────────────────────────────────────────────────────────
 
 const STATIC_ROUTES = [
     '/',
@@ -62,14 +62,37 @@ const STATIC_ROUTES = [
     '/register',
 ];
 
-// Main
+// ─── Head tag extraction ──────────────────────────────────────────────────────
+// react-helmet-async context capture doesn't work in Vite 8 SSR — tags render
+// inline inside #root instead. We extract and relocate them to <head> here.
+
+function extractHeadTags(html) {
+    let headTags = '';
+    let bodyHtml = html;
+
+    // <title>
+    bodyHtml = bodyHtml.replace(/<title>[^<]*<\/title>/, m => { headTags += m + '\n    '; return ''; });
+
+    // <meta name="description">, <meta property="og:*">, <meta name="twitter:*">
+    bodyHtml = bodyHtml.replace(
+        /<meta (?:name="(?:description|twitter:[^"]+)"|property="og:[^"]+")[^>]*\/?>/g,
+        m => { headTags += m + '\n    '; return ''; }
+    );
+
+    // <link rel="canonical">
+    bodyHtml = bodyHtml.replace(/<link rel="canonical"[^>]*\/?>/, m => { headTags += m; return ''; });
+
+    return { headTags: headTags.trim(), bodyHtml };
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function prerender() {
     console.log('\n🚀 Starting prerender...\n');
 
     const [courseSlugs, articleSlugs] = await Promise.all([
         getCourseSlugs(),
-        Promise.resolve(getArticleSlugs())
+        Promise.resolve(getArticleSlugs()),
     ]);
 
     const routes = [
@@ -78,7 +101,7 @@ async function prerender() {
         ...courseSlugs.map(s => `/programs/${s}`),
     ];
 
-    console.log(`📋 ${routes.length} routes to render\n`)
+    console.log(`📋 ${routes.length} routes to render\n`);
 
     // Load render function from SSR build
     const { render } = await import(path.resolve(serverDir, 'entry-server.js'));
@@ -86,33 +109,27 @@ async function prerender() {
     // HTML template from client build
     const template = fs.readFileSync(path.resolve(distDir, 'index.html'), 'utf-8');
 
-    let ok = 0, fail = 0
+    let ok = 0, fail = 0;
 
     for (const route of routes) {
         try {
-            const { html: appHtml, helmet } = render(route);
-
-            // Build helmet tag string
-            const helmetTags = [
-                helmet?.title?.toString(),
-                helmet?.meta?.toString(),
-                helmet?.link?.toString(),
-            ].filter(s => s && s.trim()).join('\n    ');
+            const { html: appHtml } = render(route);
+            const { headTags, bodyHtml } = extractHeadTags(appHtml);
 
             const html = template
-                .replace('<!--ssr-outlet-->', appHtml)
-                .replace('</head>', `    ${helmetTags}\n  </head>`);
+                .replace('<!--ssr-outlet-->', bodyHtml)
+                .replace('</head>', `    ${headTags}\n  </head>`);
 
-            // Write to dist
+            // Write to dist/[route]/index.html (or dist/index.html for root)
             const outPath = route === '/'
                 ? path.resolve(distDir, 'index.html')
-                : path.resolve(distDir, route.slice(1), 'index.html')
+                : path.resolve(distDir, route.slice(1), 'index.html');
 
             fs.mkdirSync(path.dirname(outPath), { recursive: true });
             fs.writeFileSync(outPath, html);
             console.log(`  ✅  ${route}`);
             ok++;
-        } catch(err) {
+        } catch (err) {
             console.error(`  ❌  ${route}: ${err.message}`);
             fail++;
         }
@@ -125,5 +142,4 @@ async function prerender() {
 prerender().catch(err => {
     console.error('\n💥 Prerender failed:', err);
     process.exit(1);
-})
-
+});
