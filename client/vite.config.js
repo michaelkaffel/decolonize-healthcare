@@ -9,7 +9,10 @@ export default defineConfig(({ isSsrBuild }) => ({
         proxy: { '/api': 'http://localhost:8080' },
     },
     build: {
-        outDir: isSsrBuild ? 'dist-server' : 'dist'
+        outDir: isSsrBuild ? 'dist-server' : 'dist',
+    },
+    ssr: {
+        noExternal: ['react-helmut-async'],
     },
     resolve: {
         conditions: ['browser', 'module', 'import', 'default'],
