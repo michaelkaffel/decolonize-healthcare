@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCourses } from '../store/coursesSlice';
 import EnrollButton from '../components/EnrollButton';
+import SEO from '../components/SEO'
 
 const SkeletonCard = () => (
     <div className='flex flex-col rounded-2xl bg-white shadow-sm overflow-hidden animate-pulse'>
@@ -20,6 +21,39 @@ const SkeletonCard = () => (
     </div>
 );
 
+const CourseCard = ({ course }) => {
+
+    const price = course.price === 0 ? 'Free' : `$${(course.price / 100).toFixed(2)}`;
+
+    return (
+        <div className='flex flex-col rounded-2xl bg-white shadow-sm overflow-hidden'>
+            {course.thumbnail && (
+                <Link to={`/programs/${course.slug}`}>
+                    <img
+                        src={course.thumbnail}
+                        alt={course.title}
+                        className='h-40 w-full object-cover'
+                    />
+                </Link>
+            )}
+            <div className='flex flex-1 flex-col p-6'>
+                <Link to={`/programs/${course.slug}`}>
+                    <h2 className='mb-1 text-base font-semibold text-gray-900'>
+                        {course.title}
+                    </h2>
+                </Link>
+                <p className='mb-4 text-sm text-gray-500 line-clamp-3'>
+                    {course.description}
+                </p>
+                <div className='mt-auto flex items-center justify-between gap-4'>
+                    <span className='text-lg font-semibold text-gray-900'>{price}</span>
+                    <EnrollButton course={course} variant='card' />
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const Programs = () => {
     const dispatch = useDispatch();
     const { items: courses, status } = useSelector((state) => state.courses);
@@ -31,6 +65,11 @@ const Programs = () => {
 
     return (
         <div className='flex-1'>
+            <SEO 
+                title='Programs'
+                path='/programs'
+                description="Join a program that interests you. Science-backed courses on meditation, movement, mental health, and more — prescription free."
+            />
             <div
                 className='relative px-6 min-h-[33vh] flex items-center bg-brand-gold lg:bg-contain bg-center bg-no-repeat'
                 style={{ backgroundImage: "url('/illustrations/programs-hero.svg')" }}
@@ -70,40 +109,6 @@ const Programs = () => {
                         ))}
                     </div>
                 )}
-            </div>
-        </div>
-    );
-};
-
-
-const CourseCard = ({ course }) => {
-
-    const price = course.price === 0 ? 'Free' : `$${(course.price / 100).toFixed(2)}`;
-
-    return (
-        <div className='flex flex-col rounded-2xl bg-white shadow-sm overflow-hidden'>
-            {course.thumbnail && (
-                <Link to={`/programs/${course.slug}`}>
-                    <img
-                        src={course.thumbnail}
-                        alt={course.title}
-                        className='h-40 w-full object-cover'
-                    />
-                </Link>
-            )}
-            <div className='flex flex-1 flex-col p-6'>
-                <Link to={`/programs/${course.slug}`}>
-                    <h2 className='mb-1 text-base font-semibold text-gray-900'>
-                        {course.title}
-                    </h2>
-                </Link>
-                <p className='mb-4 text-sm text-gray-500 line-clamp-3'>
-                    {course.description}
-                </p>
-                <div className='mt-auto flex items-center justify-between gap-4'>
-                    <span className='text-lg font-semibold text-gray-900'>{price}</span>
-                    <EnrollButton course={course} variant='card' />
-                </div>
             </div>
         </div>
     );

@@ -1,3 +1,5 @@
+import SEO from '../components/SEO'
+
 const partners = [
     {
         id: 'south-jersey-recovery',
@@ -67,7 +69,11 @@ const BulletList = ({ items }) => (
 const Partners = () => {
     return (
         <div className='min-h-screen bg-white'>
-
+            <SEO 
+                title='Partners'
+                path='/partners'
+                description='Decolonize Healthcare partners with organizations committed to accessible, compassionate, and evidence-based care — including addiction recovery and community health services.'
+            />
             {/* Hero image */}
             <div 
                 className='relative px-6 min-h-[33vh] flex items-center bg-brand-gold lg:bg-contain bg-center bg-no-repeat'

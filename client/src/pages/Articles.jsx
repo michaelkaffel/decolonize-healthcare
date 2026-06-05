@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import parseFrontMatter from 'front-matter';
 import NewsletterSignup from '../components/NewsletterSignup';
+import SEO from '../components/SEO';
 
 const rawFiles = import.meta.glob('../../../content/articles/*.md', { query: '?raw', import: 'default', eager: true });
 
@@ -58,6 +59,11 @@ const Articles = () => {
 
     return (
         <div className='bg-brand-cream2 min-h-screen'>
+            <SEO
+                title='Articles'
+                path='/articles'
+                description="Perspectives on health, healing, and the science behind both. Free articles on human biology, nutrition, movement, and mental health."
+            />
             <div className='mx-auto max-w-7xl px-6 py-16'>
 
                 <div className="mb-12">

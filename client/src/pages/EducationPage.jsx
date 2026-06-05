@@ -1,4 +1,5 @@
 import { useParams, Navigate, Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 const PageHero = ({ title, tagline, image }) => (
     <div className='relative w-full h-64 sm:h-80 overflow-hidden'>
@@ -52,7 +53,7 @@ const YouTubeEmbed = ({ id, title }) => (
             className='w-full h-full'
             src={`https://www.youtube.com/embed/${id}`}
             title={title}
-            allow='accelerometer; autoplay; clibboard-write; encrypted-media; gyroscope; picture-in-picture'
+            allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
             allowFullScreen
         />
     </div>
@@ -461,14 +462,52 @@ const pages = {
     'behavioral-biology': BehavioralBiology,
 };
 
+const meta = {
+    'childhood-adversity': {
+        title: 'Childhood Adversity',
+        description: "Learn how childhood stress and trauma affects development and shapes us as adults. America's greatest unaddressed public health threat.",
+    },
+    'neurobiology': {
+        title: 'Neurobiology',
+        description: 'Understand how your brain actually works — dopamine, serotonin, norepinephrine, and more. Free resources, no credentials required.',
+    },
+    'anatomy-physiology': {
+        title: 'Anatomy & Physiology',
+        description: 'Learn how your body works — muscles, nerves, and bones. Free open-access resources for anyone reclaiming their own health literacy.',
+    },
+    'mental-health': {
+        title: 'Mental Health',
+        description: 'Get up to date on what science is telling us about mental health now — new technologies, plant medicine, and the interdependent nature of health.',
+    },
+    'movement': {
+        title: 'Movement',
+        description: "Forget gym memberships. Learn how much, how often, and what types of movement to add to your life to live better and longer.",
+    },
+    'how-to-understand-a-scientific-article': {
+        title: 'How to Understand a Scientific Article',
+        description: 'Tired of fake news and clickbait science? Learn to read, break down, and critically interpret scientific studies like a pro.',
+    },
+    'behavioral-biology': {
+        title: 'Behavioral Biology',
+        description: 'Understand how environment, genes, hormones, and neurotransmitters shape human behavior. Featuring Dr. Robert Sapolsky of Stanford.',
+    },
+};
+
 const EducationPage = () => {
     const { slug } = useParams();
     const Page = pages[slug];
 
     if (!Page) return <Navigate to="/education" replace />;
 
+    const { title, description } = meta[slug];
+
     return (
         <div className="bg-brand-cream min-h-screen">
+            <SEO 
+                title={title}
+                description={description}
+                path={`/education/${slug}`}
+            />
             <Page />
             <BackLink />
         </div>

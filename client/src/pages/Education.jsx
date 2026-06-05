@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom';
+import SEO from '../components/SEO'
 
 const categories = [
     {
@@ -26,7 +27,7 @@ const categories = [
         slug: 'mental-health',
         image: '/images/education/mental-health.jpg',
         title: 'Mental Health',
-        tagline: 'Depression, anxiety, mindfullness',
+        tagline: 'Depression, anxiety, mindfulness',
         description: 'Get up to date on what science is telling us about mental health now. New technologies, plant medicine, and the interdependent nature of health.'
     },
     {
@@ -80,7 +81,11 @@ const CategoryCard = ({ slug, image, title, tagline, description }) => (
 
 const Education = () => (
     <div className='bg-brand-cream min-h-screen'>
-
+        <SEO 
+            title='Education Center'
+            path='/education'
+            description="Free health education resources on childhood adversity, neurobiology, mental health, movement, and more. No credentials required, no paywalls."
+        />
         <div
             className='relative px-6 min-h-[33vh] flex items-center bg-brand-gold lg:bg-contain bg-center bg-no-repeat'
             style={{ backgroundImage: "url('/illustrations/online-learning.svg')" }}
@@ -91,7 +96,7 @@ const Education = () => (
             <h1 className='text-3xl font-semibold text-white mb-4'>
                 Welcome to the <span className="font-bold">Education Center</span>
             </h1>
-            <p className='text-white/90 mx-auto mx-w-[80%] leading-relaxed'>
+            <p className='text-white/90 mx-auto max-w-[80%] leading-relaxed'>
                 Your place for health education. No credentials required, no paywalls —
                 just the best free resources on the internet, organized so you can actually use them.
             </p>

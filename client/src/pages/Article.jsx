@@ -7,6 +7,7 @@ import ShareButtons from '../components/ShareButtons';
 import RecentPosts from '../components/RecentPosts';
 import NewsletterSignup from '../components/NewsletterSignup';
 import formatDate from '../utils/formatDate';
+import SEO from '../components/SEO';
 import '../styles/article.css';
 
 const ArticleDetail = () => {
@@ -31,12 +32,17 @@ const ArticleDetail = () => {
         );
     }
 
-    const { title, subtitle, author, publishedAt, readTime, tags, body } = article;
+    const { title, subtitle, excerpt, author, publishedAt, readTime, tags, body } = article;
     const recent = AllArticles.filter(a => a.slug !== slug).slice(0, 3);
 
     return (
         <div className='min-h-screen bg-white'>
-
+            <SEO 
+                title={title}
+                description={subtitle || excerpt || undefined}
+                path={`/articles/${slug}`}
+                type='article'
+            />
             <div className='max-w-3xl mx-auto px-6 pt-10'>
                 <Link
                     to='/articles'

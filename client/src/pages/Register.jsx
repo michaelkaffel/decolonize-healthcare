@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../store/userSlice';
+import SEO from '../components/SEO';
 
 const Register = () => {
     const [form, setForm] = useState({ name: '', email: '', password: '' });
@@ -45,6 +46,11 @@ const Register = () => {
 
     return (
         <div className='flex flex-col lg:flex-row min-h-screen'>
+            <SEO 
+                title='Create Account'
+                path='/register'
+                description="Create a free Decolonize Healthcare account to enroll in courses and track your progress."
+            />
             <div className='lg:w-1/2 items-center justify-center bg-brand-blush p-12'>
                 <img
                     src='/illustrations/register-1.svg'

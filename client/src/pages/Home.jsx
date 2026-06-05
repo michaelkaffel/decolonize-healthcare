@@ -1,10 +1,16 @@
 import NewsletterSignup from '../components/NewsletterSignup';
+import SEO from '../components/SEO'
 
 const HERO_IMG = '/home-hero.png';
 const ABOUT_IMG = '/home-about.png';
 
 const Home = () => (
     <>
+
+        <SEO
+            path='/'
+            description="Your free online home to grow in your knowledge of human biology, nutrition, movement, mental health and more. Decolonize the way you think about health."
+        />
         <section>
             <img
                 src={HERO_IMG}
@@ -16,7 +22,7 @@ const Home = () => (
                     Welcome to<br />Decolonize Healthcare
                 </h1>
                 <p className='text-brand-crimson font-semibold text-xl mb-2'>
-                    Upgrate the way you think about health.
+                    Upgrade the way you think about health.
                 </p>
                 <p className='text-brand-crimson italic text-lg mb-14' >
                     Health starts at home.
