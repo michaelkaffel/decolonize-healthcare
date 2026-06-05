@@ -4,10 +4,26 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchCourses } from '../store/coursesSlice';
 import EnrollButton from '../components/EnrollButton';
 
+const SkeletonCard = () => (
+    <div className='flex flex-col rounded-2xl bg-white shadow-sm overflow-hidden animate-pulse'>
+        <div className='h-40 w-full bg-gray-200' />
+        <div className='flex flex-1 flex-col p-6'>
+            <div className='h-4 bg-gray-200 rounded w-3/4 mb-2' />
+            <div className='h-3 bg-gray-100 rounded w-full mb-1' />
+            <div className='h-3 bg-gray-100 rounded w-full mb-1' />
+            <div className='h-3 bg-gray-100 rounded w-2/3 mb-4' />
+            <div className='mt-auto flex items-center justify-between gap-4'>
+                <div className='h-5 bg-gray-200 rounded w-12' />
+                <div className='h-9 bg-gray-200 rounded-lg w-28' />
+            </div>
+        </div>
+    </div>
+);
+
 const Programs = () => {
     const dispatch = useDispatch();
     const { items: courses, status } = useSelector((state) => state.courses);
-    const loading = status === 'loading';
+    const loading = status === 'loading' || status === 'idle';
 
     useEffect(() => {
         if (status === 'idle') dispatch(fetchCourses());
@@ -33,7 +49,11 @@ const Programs = () => {
             </div>
             <div className='mx-auto max-w-4xl px-6 py-12'>
                 {loading && (
-                    <div className='text-sm text-gray-400'>Loading programmes...</div>
+                    <div className='grid gap-6 sm:grid-cols-2'>
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <SkeletonCard key={i} />
+                        ))}
+                    </div>
                 )}
 
                 {!loading && courses.length === 0 && (
