@@ -11,7 +11,4 @@ export default defineConfig(({ isSsrBuild }) => ({
     build: {
         outDir: isSsrBuild ? 'dist-server' : 'dist',
     },
-    ssr: {
-        noExternal: ['react-helmet-async'],
-    },
 }));
