@@ -1,9 +1,14 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 const About = () => {
     return (
         <div className='min-h-screen bg-white'>
-
+            <SEO
+                title='About'
+                path='/about'
+                description="Decolonize Healthcare bridges ancient healing practices and modern science to help everyone make informed decisions about their own health — free, no credentials required."
+            />
             {/* Hero background image */}
             <div
                 className='relative px-6 min-h-[33vh] flex items-center bg-brand-gold lg:bg-contain bg-center bg-no-repeat'

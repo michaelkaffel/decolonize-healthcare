@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../store/userSlice';
+import SEO from '../components/SEO'
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -34,7 +35,7 @@ const Login = () => {
                 return;
             }
             dispatch(setUser(data));
-            navigate('/dashboard');
+            navigate(redirect);
         } catch {
             setError('Unable to reach the server. Please try again.')
         } finally {
@@ -44,6 +45,11 @@ const Login = () => {
 
     return (
         <div className='flex flex-col lg:flex-row min-h-screen'>
+            <SEO 
+                title='Sign In'
+                path='/login'
+                description="Sign in to your Decolonize Healthcare account to access your courses and dashboard."
+            />
             <div className='lg:w-1/2 items-center justify-center bg-brand-blush p-12'>
                 <img
                     src='/illustrations/login-1.svg'

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import EnrollButton from '../components/EnrollButton';
+import SEO from '../components/SEO'
 
 const Program = () => {
     
@@ -33,6 +34,13 @@ const Program = () => {
 
     return (
         <div className='flex-1'>
+            <SEO 
+                title={course.title}
+                description={course.description}
+                path={`/programs/${slug}`}
+                image={course.thumbnail || undefined}
+                type='website'
+            />
             <div className='relative h-72 md:h-96 w-full overflow-hidden bg-brand-blush'>
                 {course.thumbnail && (
                     <img 

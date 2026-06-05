@@ -1,3 +1,4 @@
+import SEO from '../components/SEO';
 
 const books = [
     {
@@ -54,7 +55,11 @@ const books = [
 const Books = () => {
     return (
         <div className='min-h-screen bg-white'>
-
+            <SEO 
+                title='Books & Reading List'
+                path='/books'
+                description="A curated reading list for decolonizing your mind — titles chosen for their ability to change lives and expand how you see yourself and the world."
+            />
             {/* Hero image */}
             <div
                 className='relative px-6 min-h-[33vh] flex items-center bg-brand-gold lg:bg-contain bg-center bg-no-repeat'
@@ -76,7 +81,7 @@ const Books = () => {
             <div className='bg-brand-cream border-b border-gray-200'>
                 <div className='max-w-5xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-6'>
                     <img 
-                        src='images/book.png'
+                        src='/images/book.png'
                         className='h-36 w-auto object-contain shrink-0'
                     />
                     <div>
