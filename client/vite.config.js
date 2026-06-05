@@ -12,7 +12,7 @@ export default defineConfig(({ isSsrBuild }) => ({
         outDir: isSsrBuild ? 'dist-server' : 'dist',
     },
     ssr: {
-        noExternal: ['react-helmut-async'],
+        noExternal: ['react-helmet-async'],
     },
     resolve: {
         conditions: ['browser', 'module', 'import', 'default'],
