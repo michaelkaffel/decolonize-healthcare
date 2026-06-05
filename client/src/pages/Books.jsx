@@ -57,12 +57,12 @@ const Books = () => {
 
             {/* Hero image */}
             <div
-                className='relative px-6 min-h-[33vh] flex items-center bg-brand-blue lg:bg-contain bg-center bg-no-repeat'
+                className='relative px-6 min-h-[33vh] flex items-center bg-brand-gold lg:bg-contain bg-center bg-no-repeat'
                 style={{ backgroundImage: "url('/illustrations/book-hero.svg')" }}
             />
 
             {/* Hero text */}
-            <div className='bg-brand-blue text-center px-4 pb-10'>
+            <div className='bg-brand-gold text-center px-4 pb-10'>
                 <h1 className='text-3xl font-semibold text-white mb-4'>
                     Books &amp; <span className='font-bold'>Reading List</span>
                 </h1>

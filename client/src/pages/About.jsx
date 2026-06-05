@@ -7,7 +7,7 @@ const About = () => {
             {/* Hero background image */}
             <div
                 className='relative px-6 min-h-[33vh] flex items-center bg-brand-gold lg:bg-contain bg-center bg-no-repeat'
-                style={{ backgroundImage: "url('/illustrations/about-mission.svg')" }}
+                style={{ backgroundImage: "url('/illustrations/about-hero.svg')" }}
             />
 
             {/* Hero text */}
