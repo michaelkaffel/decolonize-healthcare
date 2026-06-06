@@ -8,7 +8,7 @@ import { fetchProgress } from '../store/progressSlice';
 
 const Dashboard = () => {
     const dispatch = useDispatch();
-    const { name } = useSelector((state) => state.user);
+    const name = useSelector((state) => state.user.data?.name)
     const { items: enrollments, status: enrollmentsStatus } = useSelector((state) => state.enrollments);
     const { byCourse } = useSelector((state) => state.progress);
 
