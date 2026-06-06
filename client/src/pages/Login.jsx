@@ -12,7 +12,7 @@ const Login = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const redirect = searchParams.get('redirect')  || '/dashboard'
+    const redirect = searchParams.get('redirect')  || '/dashboard';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -71,7 +71,7 @@ const Login = () => {
                     </div>
 
                     <a
-                        href='/api/auth/google'
+                        href={`${import.meta.env.VITE_API_URL}/api/auth/google`}
                         className='mb-4 flex w-full items-center justify-center gap-3 rounded-full border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
                     >
                         <GoogleIcon />
