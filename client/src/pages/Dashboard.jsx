@@ -22,7 +22,7 @@ const Dashboard = () => {
         }
     }, [enrollments, dispatch]);
 
-    const firstName = name?.split(' ')[0] ?? 'there';
+    const firstName = name ? name.split(' ')[0].charAt(0).toUpperCase() + name.split(' ').slice(1) : 'there';
     const loading = enrollmentsStatus === 'loading';
 
     return (
