@@ -12,7 +12,7 @@ const Login = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const redirect = searchParams.get('redirect')  || '/dashboard';
+    const redirect = searchParams.get('redirect') || '/dashboard';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -45,7 +45,7 @@ const Login = () => {
 
     return (
         <div className='flex flex-col lg:flex-row min-h-screen'>
-            <SEO 
+            <SEO
                 title='Sign In'
                 path='/login'
                 description="Sign in to your Decolonize Healthcare account to access your courses and dashboard."
@@ -103,9 +103,17 @@ const Login = () => {
                             />
                         </div>
                         <div>
-                            <label className='mb-1 block text-sm font-medium text-gray-700' htmlFor='password'>
-                                Password
-                            </label>
+                            <div className='mb-1 flex items-center justify-between'>
+                                <label className='block text-sm font-medium text-gray-700' htmlFor='password'>
+                                    Password
+                                </label>
+                                <Link
+                                    to='/forgot-password'
+                                    className='text-xs text-brand-coral hover:underline'
+                                >
+                                    Forgot password?
+                                </Link>
+                            </div>
                             <input
                                 id='password'
                                 type='password'
