@@ -15,6 +15,8 @@ import Partners from './pages/Partners.jsx';
 import About from './pages/About.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 
 // Protected Pages
 import Dashboard from './pages/Dashboard.jsx';
@@ -49,6 +51,8 @@ const App = () => {
                 <Route path="about" element={<About />} />
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
+                <Route path="forgot-password" element={<ForgotPassword />} />
+                <Route path="reset-password" element={<ResetPassword />} />
 
                 {/* Protected */}
                 <Route element={<ProtectedRoute />}>

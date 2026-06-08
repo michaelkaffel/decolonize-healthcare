@@ -14,6 +14,14 @@ const userSchema = new mongoose.Schema(
         googleId: {
             type: String
         },
+        resetToken: {
+            type: String,
+            select: false
+        },
+        resetTokenExpiry: {
+            type: Date,
+            select: false
+        },
         createdAt: {
             type: Date,
             default: Date.now
